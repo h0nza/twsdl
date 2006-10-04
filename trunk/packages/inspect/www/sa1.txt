@@ -1,0 +1,53 @@
+{
+    "VSObjects"
+    "http://example.com"
+    "maria:8080"
+    
+    {
+	{"GetObjectID"
+	    ad_proc ::vs::objects::get_object_id {
+		type_key
+		key_value
+	    } {
+		{TypeKey xsd::string}
+		{KeyValue xsd::string}
+	    } {
+		{ObjectID xsd::integer}
+	    }
+	}
+	
+	{"CanUserAdministerObject"
+	    ad_proc ::vs::objects::can_user_administer_object { 
+		object_id
+		{ -user_id "" }
+	    } {
+		{ObjectID xsd::integer}
+	    } {
+		{CanAdminister xsd::boolean}
+		{UserID xsd::integer}
+	    }
+	}
+	
+	{"BogusArgParseEg"
+	    ad_proc ::vs::objects::testargs {
+		myArgC 
+		myArgD
+		{myDefaultArgE "some default e val"}
+		{myDefaultArgF "some default f val"}
+		{-myArgA "valA"}
+		{-myArgB "valB"}
+	    } {
+		{MyArgC xsd::integer}
+		{MyArgD xsd::boolean}
+		{MyDefaultArgE xsd::string}
+		{MyDefaultArgF xsd::string}
+		{MyArgA xsd::string}
+		{MyArgB xsd::string}
+	    } {
+		{MyResponseArgA xsd::string}
+		{MyResponseArgB xsd::integer}
+		{MyOptionalResponseArgC xsd::boolean 0} 
+	    }
+	}
+    }
+}
