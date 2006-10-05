@@ -1,0 +1,290 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: WSD API</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+
+<div class="title">United eWay tWSDL: WSD API</div>
+<div class="abstract">
+ <p>The complete external description of a Web Service is stored
+ in an XML file called a WSDL file. A WSDL file is a document
+ describing the public interface to the Web Services listed in
+ the file.
+ </p>
+ <p>The API outlined below will be used by the developer to
+ create a Web Service, connect it to internal functions and publish
+ the Description as a WSDL file.
+ </p>  
+</div>
+
+<div class="cat">WSDL Definitions
+ <div class="body">The top level or root element in a WSDL file is 
+ <span class="code">wsdl:defintions</span>. Construction of this element
+ will be almost fixed except for the targetNamespace. When defining a new
+ WSDL Service, this is the first step.
+ <pre class="code-example" title="WSDL Definitions API">
+
+set wsdlDef wsd
+set targetNamespace "http://www.united-e-way.org"
+set tnsAlias tns
+
+::wsdl::definitions::new $wsdlDef $targetNamespace $tnsAlias
+
+ </pre>
+<p>If the WSDL file was printed at this time it would look something like
+this:</p>
+<pre class="code-example" title="Empty WSDL Definitions Document">
+
+&lt;?xml version="1.0" encoding="utf-8"?>
+<a href="http://www.w3.org/TR/wsdl.html#_service">&lt;wsdl:definitions</a>
+ targetNamespace="http://www.united-e-way.org"
+ xmlns:tns="http://www.united-e-way.org"
+ xmlns:soap="<a href="http://schemas.xmlsoap.org/wsdl/soap/">http://schemas.xmlsoap.org/wsdl/soap/</a>"
+ xmlns:s="<a href="http://www.w3.org/2001/XMLSchema">http://www.w3.org/2001/XMLSchema</a>"
+ xmlns:wsdl="<a href="http://schemas.xmlsoap.org/wsdl/">http://schemas.xmlsoap.org/wsdl/</a>">
+
+&lt;/wsdl:definitions>
+
+</pre>
+
+ </div>
+</div>
+
+<div class="cat">WSDL Messages
+ <div class="body">A&nbsp; WSDL Message identifies the structure (type) of
+ a one-way communication. In simple terms it is either the input to or
+ the output of a WSDL operation. It is assumed that the developer has
+ already defined types which will correspond to the WSDL Message,
+ so the API for this step is fairly simple:
+<pre class="code-example" title="WSDL Message API">
+
+::wsdl::message::new $wsdlDef SaveDonationSoapIn SaveDonation
+
+</pre>   
+<p>This would result in the following XML fragment within a WSDL File:</p>
+<pre class="code-example" title="WSDL Message XML Fragment">
+  
+<a href="http://www.w3.org/TR/wsdl.html#_messages">&lt;wsdl:message name="SaveDonationSoapIn">
+</a> <a href="http://www.w3.org/TR/wsdl.html#_message">&lt;wsdl:part name="parameters" element="tns:SaveDonation" />
+</a>&lt;/wsdl:message>
+
+</pre> 
+<p>
+The message type is <span class="code">SaveDonation</span>. All message
+types are globally defined elements in the <span class="code">wsdl:types</span>
+section of the WSDL file. This API call should also ensure that the associated
+type definition and any types it depends on become a part of the WSDL file, so
+that the above call would ensure that the following, and all dependent 
+types would be included in the WSDL file:
+<pre class="code-example" title="WSDL Type of SaveDonationSoapIn Message">
+
+&lt;s:element name="SaveDonation">
+  &lt;s:complexType>
+    &lt;s:sequence>
+      &lt;s:element minOccurs="0" maxOccurs="1" name="donationData" type="tns:DonationData" />
+    &lt;/s:sequence>
+  &lt;/s:complexType>
+&lt;/s:element>
+
+</pre>
+</p>
+ </div>
+</div>
+
+
+<div class="cat">WSDL Operations
+ <div class="body">
+ <p>A&nbsp; WSDL Operation describes a single type of interaction
+ possible between a client and server. An operation associates inputs and 
+ outputs with a message type. The order of the input/output is important,
+ for instance an in-out order is characteristic of request/response, that
+ is first there is an input to the server, then an output from the server.
+ </p>
+ <p>Operations are defined in a WSDL file in a way which makes them dependent
+ on the portType and the Binding. The tWSDL API will offer a separate 
+ independent API to define operations before including them in a portType.  
+ At this stage, the developer also needs to associate an operation with
+ an internal API. The full details will need to be worked out for complex
+ inputs or outputs, but in simple cases, just the name of the procedure
+ will be required.
+ </p>
+<pre class="code-example" title="WSDL Operation API">
+
+::wsdl::operation::new $wsdlDef SaveDonation {
+ {input SaveDonationSoapIn}
+ {output SaveDonationSoapOut}
+} {::my::internal::proc}
+
+</pre>
+<p>This would result in an XML fragment like this:</p>
+<pre class="code-example" title="WSDL Operation XML Fragment">
+
+<a href="http://www.w3.org/TR/wsdl.html#_request-response">&lt;wsdl:operation name="SaveDonation">
+</a>  &lt;wsdl:input message="tns:SaveDonationSoapIn" />
+  &lt;wsdl:output message="tns:SaveDonationSoapOut" />
+&lt;/wsdl:operation>
+
+</pre>
+
+
+ </div>
+</div>
+
+
+<div class="cat">WSDL PortTypes
+ <div class="body">Once all the WSDL Operations are defined as above, they
+ can be combined into a portType. A portType is simply a collection of 
+ operations. Collecting them togeather as a whole allows the developer to
+ offer a similar set of operations via different bindings.
+
+<pre class="code-example" title="WSDL PortType API">
+
+::wsdl::portType::new $wsdlDef OPPSServiceSoap {
+
+ ...
+
+ SaveDonation
+
+ ...
+
+}
+
+</pre>
+
+<p>This would result in an XML fragment like this:</p>
+
+<pre class="code-example" title="WSDL PortType XML Fragment">
+
+<a href="http://www.w3.org/TR/wsdl.html#_porttypes">&lt;wsdl:portType name="OPPSServiceSoap">
+</a>
+...
+
+  <a href="http://www.w3.org/TR/wsdl.html#_request-response">&lt;wsdl:operation name="SaveDonation">
+</a>    &lt;wsdl:input message="tns:SaveDonationSoapIn" />
+    &lt;wsdl:output message="tns:SaveDonationSoapOut" />
+  &lt;/wsdl:operation>
+
+...
+
+&lt;/wsdl:portType>
+
+</pre>
+
+
+ </div>
+</div>
+
+
+<div class="cat">WSDL Bindings
+ <div class="body">A&nbsp; WSDL Binding adds a few concrete details to the
+ more abstract portTypes. A binding associates each operation (an internal
+ name) in a portType with an external name and specifies a number of other
+ items such as document style and encoding type. More importantly, a binding
+ specifies a specific protocol type. The supported protocol for tWSDL is
+ SOAP 1.1 using document-literal.
+
+
+<pre class="code-example" title="SOAP Document-Literal Binding API">
+::wsdl::binding::soap::document_literal::new  $wsdlDef OPPSServiceSoap OPPSServiceSoap {
+
+ ...
+
+ {SaveDonation http://www.united-e-way.org/SaveDonation}
+
+ ...
+
+}
+</pre>
+<p>The corresponding XML would look like this:</p>
+<pre class="code-example" title="WSDL Binding XML Fragment">
+
+<a href="http://www.w3.org/TR/wsdl.html#_bindings">&lt;wsdl:binding name="OPPSServiceSoap" type="tns:OPPSServiceSoap">
+</a> <a href="http://www.w3.org/TR/wsdl.html#_soap:binding"> &lt;soap:binding transport="<a href="http://schemas.xmlsoap.org/soap/http/">http://schemas.xmlsoap.org/soap/http</a>" style="document" />
+</a>
+...
+
+  <a href="http://www.w3.org/TR/wsdl.html#_request-response">&lt;wsdl:operation name="SaveDonation">
+</a>    <a href="http://www.w3.org/TR/wsdl.html#_soap:operation">&lt;soap:operation soapAction="http://www.united-e-way.org/SaveDonation" style="document" />
+</a>    &lt;wsdl:input>
+      <a href="http://www.w3.org/TR/wsdl.html#_soap:body">&lt;soap:body use="literal" />
+</a>    &lt;/wsdl:input>
+    &lt;wsdl:output>
+      <a href="http://www.w3.org/TR/wsdl.html#_soap:body">&lt;soap:body use="literal" />
+</a>    &lt;/wsdl:output>
+  &lt;/wsdl:operation>
+
+...
+
+&lt;/wsdl:binding>
+
+</pre>
+<p>There are other additional API that could be useful here.
+ For instance, a separate API to add operations to a binding one at a time
+ instead of as a list. Note that this is a specific extension API 
+ <span class="code">::wsdl::binding::soap::document_literal</span>. Each binding type
+ should be written as an extension. This affords maximum flexibility as to arguments
+ given to the API. In this case all that is needed is a listing of the wsdl operations
+ and their external name (soapAction).
+</p>
+ </div>
+</div>
+
+<div class="cat">WSDL Ports
+ <div class="body">WSDL Ports are not defined outside of a Service, but an API to 
+ create a port is useful. When a Service is created it can simply reference the 
+ WSDL Port. A WSDL Port is the the Web Address, or URL of the Service.
+<pre class="code-example" title="WSDL Port API">
+
+::wsdl::port::new $wsdlDef OPPSServiceSoap OPPSServiceSoap {
+ http://qa3-oppsservice.united-e-way.org/OPPSService.asmx
+}
+
+</pre>
+<p>Note that the data required for a port may differe between bindings, so
+the information is passed as a list as the third argument. In this case, the SOAP
+Binding is used, so the SOAP extension will use this data to configure the
+server and client.
+<pre class="code-example" title="WSDL Port XML Fragment">
+
+<a href="http://www.w3.org/TR/wsdl.html#_ports">&lt;wsdl:port name="OPPSServiceSoap" binding="tns:OPPSServiceSoap">
+</a>  <a href="http://www.w3.org/TR/wsdl.html#_soap:address">&lt;soap:address location="http://qa3-oppsservice.united-e-way.org/OPPSService.asmx" />
+</a>&lt;/wsdl:port>
+
+</pre>
+
+
+ </div>
+</div>
+
+
+<div class="cat">WSDL Services
+ <div class="body">The final step in building a Web Service Description is to name the
+ service. The API must associate the Name with one or more ports:
+
+<pre class="code-example" title="WSDL Service API">
+
+::wsdl::service::new $wsdlDef OPPSService {OPPSServiceSoap}
+
+</pre>
+
+<pre class="code-example" title="WSDL Service XML Fragment">
+
+<a href="http://www.w3.org/TR/wsdl.html#_services">&lt;wsdl:service name="OPPSService">
+</a>  <a href="http://www.w3.org/TR/wsdl.html#_ports">&lt;wsdl:port name="OPPSServiceSoap" binding="tns:OPPSServiceSoap">
+</a>    <a href="http://www.w3.org/TR/wsdl.html#_soap:address">&lt;soap:address location="http://qa3-oppsservice.united-e-way.org/OPPSService.asmx" />
+</a>  &lt;/wsdl:port>
+&lt;/wsdl:service>
+
+</pre>
+
+
+ </div>
+</div>
+
+
+
+</body>
+</html>
