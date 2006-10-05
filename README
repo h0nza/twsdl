@@ -81,6 +81,31 @@ $ svn checkout http://twsdl.googlecode.com/svn/trunk/ twsdl
 ns_section ns/server/${server}/modules
 ns_param twsdl tcl
 
+5. Testing: 
 
+Large parts of tWSDL function without AOLserver. Additional parts work
+with libnsd.so loaded. Here is a simple method of testing that all the 
+software is installed, ignoring AOLserver configuration issues:
 
+$ cd (to twsdl directory containing init.tcl)
+$ ls
+add-copyright  copyright-notice.txt  init.tcl  packages  README
+
+$ /web/m2/bin/tclsh8.4  
+% load /web/nsd45/lib/libnsd.so 
+% source init.tcl
+
+Any errors should be related to missing server commands such as
+ns_register_proc.
+
+You don't even need to load libnsd.so, but you then will need to load tDOM
+by hand. 
+
+Symlink package www directories to where you want them to show up under 
+pageroot.
+
+Remove or add packages by editing the file packages/tws/tcl/tws-local-conf.tcl
+(edit the list ::tws::packages, note that order may be important).
+
+6. Enjoy!
 
