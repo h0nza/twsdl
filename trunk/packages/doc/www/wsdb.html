@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: Web Services DB</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+
+<div class="title">United eWay tWSDL: Web Services DB</div>
+ <div class="abstract">
+ A single web service may be pieced togeather using an ad-hoc method. As long
+ as the service works as intended, there is no need to rationalize the design
+ or address larger issues faced by future developers. Since tWSDL will be used
+ by developers to provide a variety of services, we must address the information
+ architecture of a running web service server. This structured information will
+ will be termed the Web Services DB.
+
+ </div>
+ <div class="abstract">Temporary Note: In thinking about the WSDB, I realized that
+ most of the Server API shown in the Examples page will be simplified, in particular
+ you will not have to provide the service name to each API call, but only when creating
+ the port and service (last few API).
+ </div>
+
+<div class="cat">Simple Idea: Everything in One Place.
+ <div class="body">The Web Services DB will be internally represented as a
+ series of namespaced variables. This structure will allow for maximum introspection
+ which will be needed to build services and to create and validate documents. 
+ </div> 
+</div>
+
+<div class="cat">Example Structure for the Web Services DB
+ <div class="body">Here is the potential structure for the Web Services DB:
+ <pre class="code-example" title="Web Services DB">
+# main namespace 
+::wsdb
+
+# types 
+::wsdb::types
+
+# type namespaces (not the same as Tcl namespaces)
+# for instance tcl for tcl types checked by [string is -strict ]
+::wsdb::types::tcl
+::wsdb::types::xsd
+
+# type information for particular type (tcl string)
+::wsdb::types::tcl::string
+   
+# a particular namespace for global types which
+# are use as message types
+::wsdb::types::global
+
+# messages 
+::wsdb::messages
+
+# one message (when messages are added, the type name is added to global types)
+::wsdb::messages::StockRequest
+
+# operations
+::wsdb::operations
+
+# one operation (ordered list of message names)
+::wsdb::operations::StockQuoteOperation
+
+# portTypes
+::wsdb::porttypes
+
+# one portType
+::wsdb::porttypes::StockPortType
+
+# bindings
+::wsdb::bindings
+
+# one binding
+::wsdb::bindings::StockQuoteSoapBinding
+
+# ports
+::wsdb::ports
+
+# one port
+::wsdb::ports::StockQuoteSoapPort
+
+# services
+::wsdb::services
+
+# one service
+::wsdb::services::StockQuoteService
+ </pre>
+
+
+ </div> 
+</div>
+
+<div class="cat">Shared Information allows Maximum Reuse of Components
+ <div class="body">The sequence of namespaces listed above reflects the order
+ in which data is added to the Web Services DB. It also reflect the information
+ available to API calls. As the database is filled, future API calls can rely on
+ this information, and refer to it by name only. In addition, the order reflects
+ the fact that abstract descriptions can be reused by later API calls, essentially
+ to branch off. For instance, once an abstract type is defined, it can be used
+ by all future services. Operations can be combined into different portTypes. The same
+ portType could be bound to different ports in different services.
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+</body>
+</html>
