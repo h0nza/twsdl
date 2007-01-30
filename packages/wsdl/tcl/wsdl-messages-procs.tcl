@@ -23,7 +23,7 @@ proc ::wsdl::messages::new {
 namespace eval ::wsdb::messages::${messageNamespace} \{ \}
 
 namespace eval ::wsdb::messages::${messageNamespace}::${messageName} \{
-    variable Parts
+    variable Parts \[list\]
 \}"
 
 

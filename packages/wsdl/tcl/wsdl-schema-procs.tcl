@@ -33,6 +33,16 @@ proc ::wsdl::schema::new { schemaAlias targetNamespace} {
     if {!$initialized} {
 	initDatabase
     }
+
+    if {[::wsdb::schema::aliasExists $schemaAlias]} {
+	if {[::wsdb::schema::getTargetNamespace $schemaAlias] ne "$targetNamespace"} {
+	    log Error "wsdl::schema::new attempt to use $schemaAlias for new targetNamespace '$targetNamespace'"
+	    return -code error
+	} 
+	log Debug "wsdl::schema::new alias $schemaAlias already exists"
+	return
+    }
+    
     ::wsdb::schema::appendAliasMap [list $schemaAlias $targetNamespace]
     namespace eval ::wsdb::schema::$schemaAlias {
 	variable schemaItems [list]
@@ -50,7 +60,8 @@ proc ::wsdl::schema::appendSimpleType {
     {base xsd::string}
     {data ""}
 } {
-    lappend ::wsdb::schema::${schemaAlias}::schemaItems $name
+    #lappend ::wsdb::schema::${schemaAlias}::schemaItems $name
+    ::wsdb::schema::addSchemaItem $schemaAlias $name
     set typeNS ::wsdb::schema::${schemaAlias}::${name}
 
     namespace eval $typeNS {
@@ -74,7 +85,9 @@ proc ::wsdl::schema::addElement {
     {base xsd::string} 
 } {
 
-    lappend ::wsdb::schema::${schemaAlias}::schemaItems $name
+    #lappend ::wsdb::schema::${schemaAlias}::schemaItems $name
+    ::wsdb::schema::addSchemaItem $schemaAlias $name
+
     set typeNS ::wsdb::schema::${schemaAlias}::${name}
 
     namespace eval $typeNS {
@@ -114,7 +127,7 @@ proc ::wsdl::schema::addSequence {
 	}
 
 	if {$makeChildGlobalType} {
-	    if {[lsearch -exact [set ::wsdb::schema::${schemaAlias}::schemaItems] $elementName ] == -1} {
+	    if {![::wsdb::schema::schemaItemExists $schemaAlias $elementName]} {
 		::wsdl::schema::addElement $schemaAlias $elementName $base
 		set base ${schemaAlias}::$elementName
 	    } else {
@@ -139,6 +152,7 @@ proc ::wsdl::schema::addSequence {
         }
     }
 
-    lappend ::wsdb::schema::${schemaAlias}::schemaItems $name 
+    #lappend ::wsdb::schema::${schemaAlias}::schemaItems $name 
+    ::wsdb::schema::addSchemaItem $schemaAlias $name
 
 }

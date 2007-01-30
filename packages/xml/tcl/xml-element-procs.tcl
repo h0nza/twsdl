@@ -20,7 +20,7 @@ proc ::xml::element::append { parent childName {prefix {}} {attributeList {}} } 
     }
     set CurrentChildrenList [set ${parent}::.PARTS]
     
-    log Notice "parent = $parent CurrentChildrenList = $CurrentChildrenList"
+    #log Notice "parent = $parent CurrentChildrenList = $CurrentChildrenList"
 
     # Get list of all similarly named children. 
     set MultiChildList [lsearch -inline -all $CurrentChildrenList ${childName}*]
@@ -30,7 +30,7 @@ proc ::xml::element::append { parent childName {prefix {}} {attributeList {}} } 
 	set ElementNamespaceTail $childName
     }
 
-    log Notice "element::append ElementNamespaceTail = $ElementNamespaceTail"
+    #log Notice "element::append ElementNamespaceTail = $ElementNamespaceTail"
     
     # Create element shell:
     ::xml::element::create ${parent}::$ElementNamespaceTail $prefix

@@ -47,4 +47,33 @@ proc ::wsdb::schema::getTargetNamespace { alias } {
     set aliasMapping [lsearch -inline $aliasMap [list "$alias" "*"]]
     return [lindex $aliasMapping 1]
 }
+
+proc ::wsdb::schema::aliasExists { alias } {
+
+    variable aliasMap
+    if {[lsearch $aliasMap [list "$alias" "*"]] > -1} {
+	return 1
+    } else {
+	return 0
+    }
+}
+
+proc ::wsdb::schema::schemaItemExists { schema item } {
+
+    if {[lsearch [set ::wsdb::schema::${schema}::schemaItems] $item] > -1} {
+	return 1
+    } else {
+	return 0
+    }
+}
+
+proc ::wsdb::schema::addSchemaItem { schema item } {
+
+    if {[schemaItemExists $schema $item]} {
+	return 0
+    } else {
+	lappend ::wsdb::schema::${schema}::schemaItems $item
+	return 1
+    }
+}
 				     
