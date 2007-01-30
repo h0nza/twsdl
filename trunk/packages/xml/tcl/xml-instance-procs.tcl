@@ -55,7 +55,7 @@ proc ::xml::instance::new {instanceNS xmlList {isDoc 0} } {
 	    set "${instanceNS}::$PartName" [lindex $child 1]
 	    incr Child_Count($Name)
 	    lappend ${instanceNS}::.PARTS "$PartName"
-	    log Notice "Now ${instanceNS}::.PARTS = [set ${instanceNS}::.PARTS]"
+	    #log Debug "Now ${instanceNS}::.PARTS = [set ${instanceNS}::.PARTS]"
 	    continue
 	}
 
@@ -308,7 +308,7 @@ proc ::xml::instance::toXMLNS { namespace {depth -1} {mixedParent 0} } {
 	&& [set ${namespace}::.PREFIX] ne ""
     } {
 	set prefixElementName [join [list [set ${namespace}::.PREFIX] $elementName] ":"]
-	log Debug "toXMLNS prefixElementName = $prefixElementName"
+	#log Debug "toXMLNS prefixElementName = $prefixElementName"
     } else {
 	#log Debug "toXMLNS namespace = $namespace"
 	set prefixElementName $elementName
@@ -379,7 +379,7 @@ proc ::xml::instance::printErrors { namespace {depth -1} } {
 	&& [set ${namespace}::.PREFIX] ne ""
     } {
 	set prefixElementName [join [list [set ${namespace}::.PREFIX] $elementName] ":"]
-	log Debug "toXMLNS prefixElementName = $prefixElementName"
+	#log Debug "toXMLNS prefixElementName = $prefixElementName"
     } else {
 	#log Debug "toXMLNS namespace = $namespace"
 	set prefixElementName $elementName

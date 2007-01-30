@@ -8,6 +8,8 @@
 
 # Really Primitive Types:
 # Any Simple Type:
+::wsdl::schema::new tcl "urn:tcl"
+
 ::wsdl::types::primitiveType::new tcl anySimpleType {return 1} {Base type, should return true for every case}
 ::wsdl::doc::document doc types tcl anySimpleType {Base type, should return true for every case}
 

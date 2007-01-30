@@ -16,9 +16,9 @@ set ::tws::packages {
     wsdb
     request
     stockQuoter
-    vsObjects
     inspect
     doc
+    wsapi
 }
 
 ::tws::util::package::loadPackages $::tws::packages

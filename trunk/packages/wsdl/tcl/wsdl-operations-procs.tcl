@@ -23,7 +23,7 @@ proc ::wsdl::operations::new {
     namespace eval ::wsdb::operations::${operationNamespace} { }
     
     namespace eval ::wsdb::operations::${operationNamespace}::${operationName} {
-	variable messages 
+	variable messages [list]
 	variable invoke
 	variable operationProc
 	variable conversionList

@@ -7,9 +7,11 @@
 # Types for XML-Schema namespace="http://www.w3.org/2001/XMLSchema"
 
 # Create xsd namespace
-namespace eval ::wsdb::types::xsd { }
-namespace eval ::wsdb::schema::xsd { }
-::wsdb::schema::appendAliasMap [list xsd "http://www.w3.org/2001/XMLSchema"]
+#namespace eval ::wsdb::types::xsd { }
+#namespace eval ::wsdb::schema::xsd { }
+#::wsdb::schema::appendAliasMap [list xsd "http://www.w3.org/2001/XMLSchema"]
+::wsdl::schema::new xsd "http://www.w3.org/2001/XMLSchema"
+
 # anySimpleType
 ::wsdl::types::primitiveType::new xsd anySimpleType {return 1} {Base type, should return true for every case}
 ::wsdl::doc::document doc types xsd anySimpleType {Base type, should return true for every case}
