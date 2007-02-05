@@ -89,8 +89,12 @@ proc ::<ws>return {tclNamespace} {
 			} 
 		    }
 		    set length [string length $returnBody]
+		    set host [<ws>namespace set $tclNamespace host]
+		    set port [<ws>namespace set $tclNamespace port]
+		    set protocol [<ws>namespace set $tclNamespace protocol]
+		    set hostHeader [<ws>namespace set $tclNamespace hostHeader]
 		    set Request "POST $url HTTP/1.1
-Host: [ns_set iget [ns_conn headers] host]
+Host: $hostHeader
 Content-Type: text/xml; charset=utf-8
 Content-Length: $length
 SOAPAction: \"$SOAPAction\"
@@ -100,7 +104,7 @@ $returnBody
 
                     if {$missing == 0} {
 
-                        set sock [socket 192.168.1.102 8005]
+                        set sock [socket $host $port]
                         fconfigure $sock -translation binary
 
                         puts $sock $Request
@@ -211,12 +215,36 @@ proc ::<ws>namespace {
 		variable serviceName ${xmlPrefix}Service
 		variable serverName ${xmlPrefix}Server
 		variable forzen 0
+		variable protocol
+		variable hostHeader
+		variable host
+		variable port
+
+
+		if {"[ns_conn driver]" eq "nssock"} {
+		    set protocol http
+		} else {
+		    set protocol https
+		}
+		set hostHeader [ns_set iget [ns_conn headers] host]
+		set hostHeaderList [split $hostHeader ":"]
+		if {[llength $hostHeaderList] == 2} {
+		    set host [lindex $hostHeaderList 0]
+		    set port [lindex $hostHeaderList 1]
+		} else {
+		    set host $hostHeader
+		    set port 80
+		}
+		set host [lindex [split $hostHeader ":"] 0]
 	    }
 	    
 	}
 	"finalize" {
 	    namespace eval $tclNamespace {
-		variable soapActionBase [ns_conn location]/$xmlPrefix
+		variable hostHeader
+		variable protocol
+		variable soapActionBase ${protocol}://$hostHeader/$xmlPrefix
+
 		# Create PortType
 		::wsdl::portTypes::new $tclNamespace $portType $operations
 		# Bind
@@ -230,7 +258,7 @@ proc ::<ws>namespace {
 		::wsdl::ports::new $portName $bindingName [ns_conn url]
 		::wsdl::services::new $serviceName [list $portName]
 		::wsdl::server::new $serverName $targetNamespace [list $serviceName]
-		set ::wsdb::servers::${serverName}::hostHeaderNames [string range [ns_conn location] 7 end]
+		set ::wsdb::servers::${serverName}::hostHeaderNames $hostHeader
 		::wsdl::definitions::new $serverName
 
 
@@ -393,29 +421,22 @@ proc ::<ws>proc {
     # XML Schema Element Types (complexType):
     # Create input/output element as type to be used for message:
     set inputElementName ${baseName}Request
-    set code [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $inputElementName $inputTypeList $inputConversionList] 
-    # remove this when done:
-    #::tws::log::log Debug "<ws>proc code = '$code'"
+    eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $inputElementName $inputTypeList $inputConversionList] 
 
-    eval $code
     set outputElementName ${baseName}Response
-    set returnCode [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $outputElementName $returnTypeList]
-    # remove this when done:
-    eval $returnCode
-    
+    eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $outputElementName $returnTypeList]
+   
     # WSDL Messages
     set inputMessageName ${inputElementName}Msg
-    set inputMessageCode [::wsdl::messages::new $xmlPrefix $inputMessageName $inputElementName]
-    eval $inputMessageCode
+    eval [::wsdl::messages::new $xmlPrefix $inputMessageName $inputElementName]
+
     set outputMessageName ${outputElementName}Msg
-    set outputMessageCode [::wsdl::messages::new $xmlPrefix $outputMessageName $outputElementName]
-    eval $outputMessageCode
+    eval [::wsdl::messages::new $xmlPrefix $outputMessageName $outputElementName]
 
     # WSDL Operation
     set operationName ${baseName}Operation
-    set operationCode [::wsdl::operations::new $xmlPrefix $operationName [list $procName $inputConversionList] \
+    eval [::wsdl::operations::new $xmlPrefix $operationName [list $procName $inputConversionList] \
 			   [list input $inputMessageName] [list output $outputMessageName]]
-    eval $operationCode
     
     <ws>namespace lappend $tclNamespace operations $operationName
 
