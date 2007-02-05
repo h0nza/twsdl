@@ -241,8 +241,7 @@ proc ::<ws>namespace {
 	}
 	"finalize" {
 	    namespace eval $tclNamespace {
-		variable hostHeader
-		variable protocol
+
 		variable soapActionBase ${protocol}://$hostHeader/$xmlPrefix
 
 		# Create PortType
