@@ -19,8 +19,10 @@ foreach var $vars {
 	foreach arrayName $arrayNames {
 	    append output " ${var}\($arrayName\) = '[set ${var}($arrayName)]'\n"
 	}
-    } else {
+    } elseif {[info exists $var]} {
 	append output " $var = '[set $var]'\n"
+    } else {
+	append output " $var is currently undefined\n"
     }
 }
 
