@@ -37,6 +37,7 @@ proc ::wsdl::operations::new {
     set ::wsdb::operations::${operationNamespace}::${operationName}::operationProc $operationProc
     set ::wsdb::operations::${operationNamespace}::${operationName}::conversionList $conversionList
 
+    set procArgs [list]
     foreach {var conversion} $conversionList {
 	lappend procArgs "\$$var"
     }
@@ -66,6 +67,7 @@ proc ::wsdl::operations::new {
 
     }    
 
+    set operationProcArgs [join $procArgs " "]
     set script ""
     append script "
 proc ::wsdb::operations::${operationNamespace}::${operationName}::Invoke \{ 
@@ -75,7 +77,7 @@ proc ::wsdb::operations::${operationNamespace}::${operationName}::Invoke \{
     variable conversionList
     ::xml::childElementsAsListWithConversions \$inputXMLNS \$conversionList
     
-    return \[::wsdb::elements::${operationNamespace}::${outputElement}::new \$outputXMLNS \[$operationProc [join $procArgs " "]\]\]
+    return \[::wsdb::elements::${operationNamespace}::${outputElement}::new \$outputXMLNS \[$operationProc $operationProcArgs\]\]
 \}
 "
 
@@ -111,7 +113,25 @@ proc ::wsdl::operations::getOutputMessageType {
 				[set ::wsdb::operations::${operationNamespace}::${operationName}::messages]\
 				{output *}]
     if {[llength $OperationList] == 1} {
-	set message [lindex $inputOperationList {0 1}]
+	set message [lindex $OperationList {0 1}]
+	set messageParts [set ::wsdb::messages::${operationNamespace}::${message}::Parts]
+	set messageType [lindex $messageParts 0]
+	return $messageType
+    } else {
+	return ""
+    }
+}
+
+proc ::wsdl::operations::getInputMessageType { 
+    operationNamespace
+    operationName
+} {
+
+    set OperationList [lsearch -inline -all \
+				[set ::wsdb::operations::${operationNamespace}::${operationName}::messages]\
+				{input *}]
+    if {[llength $OperationList] == 1} {
+	set message [lindex $OperationList {0 1}]
 	set messageParts [set ::wsdb::messages::${operationNamespace}::${message}::Parts]
 	set messageType [lindex $messageParts 0]
 	return $messageType
@@ -125,11 +145,11 @@ proc ::wsdl::operations::getFaultMessageType {
     operationName
 } {
 
-    set inputOperationList [lsearch -inline -all \
+    set OperationList [lsearch -inline -all \
 				[set ::wsdb::operations::${operationNamespace}::${operationName}::messages]\
 				{fault *}]
-    if {[llength $inputOperationList] == 1} {
-	return [lindex $inputOperationList 1]
+    if {[llength $OperationList] == 1} {
+	return [lindex $OperationList 1]
     } else {
 	return ""
     }

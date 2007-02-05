@@ -8,20 +8,6 @@
 
 proc ::<ws>return {tclNamespace} {
 
-    set WSDL [ns_queryget WSDL "0"]
-
-    if {"$WSDL"} {
-	set definitions [xml::document::print ::wsdb::definitions::mywebserviceServer::definitions] 
-	ns_return 200 text/xml $definitions
-    } else {
-	namespace eval ::mywebservice {
-	    ::wsdl::server::accept [list $serverName $serviceName $portName $bindingName [ns_conn url]] 
-	}
-    }
-}
-
-proc ::<ws>return {tclNamespace} {
-
     set method [string toupper [ns_conn method]]
 
     switch -exact -- "$method" {
@@ -63,7 +49,7 @@ proc ::<ws>return {tclNamespace} {
 		    set inputMessageType [::wsdl::operations::getInputMessageType $xmlPrefix $operation]
 		    set inputMessageConv [set ::wsdb::elements::${xmlPrefix}::${inputMessageType}::conversionList]
 		    set inputMessageSignature [list]
-                    set inputFormelements ""
+                    set inputFormElements ""
 		    set missing 0
 		    foreach {element type} $inputMessageConv {
 			if {"[set ${inputMessageType}.$element "[ns_queryget ${inputMessageType}.$element ""]"]" eq ""} {
@@ -139,7 +125,7 @@ $returnBody
 <table border=\"1\">
 $inputFormElements
 <tr>
-<th colspan=\"2\"><input type=\"submit\"></th>
+<th colspan=\"2\"><input type=\"submit\" value=\"Send $inputMessageType\"></th>
 </tr>
 </table>
 </form>	"
@@ -407,7 +393,7 @@ proc ::<ws>proc {
     # XML Schema Element Types (complexType):
     # Create input/output element as type to be used for message:
     set inputElementName ${baseName}Request
-    set code [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $inputElementName $inputTypeList] 
+    set code [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $inputElementName $inputTypeList $inputConversionList] 
     # remove this when done:
     #::tws::log::log Debug "<ws>proc code = '$code'"
 

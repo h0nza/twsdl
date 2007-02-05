@@ -83,6 +83,7 @@ proc ::wsdl::elements::modelGroup::sequence::new {
     schemaAlias 
     typeName
     simpleTypesList
+    {conversionList {}}
 } {
 
     set script ""
@@ -153,9 +154,13 @@ namespace eval ::wsdb::elements::${schemaAlias}::$typeName \{
     }
 
     # Conversion List Used for Invoke procedure
-    append script "
+    if {![llength $conversionList]} {
+	append script "
+    variable conversionList \{$conversionList\}"
+    } else {
+	append script "
     variable conversionList \{[join $Elements { Value }] Value\}"
-
+    }
     # Foreach with switch, probably change to foreach with loops.
 
     append script "
