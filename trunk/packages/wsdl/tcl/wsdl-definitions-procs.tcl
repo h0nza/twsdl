@@ -206,7 +206,11 @@ proc ::wsdl::definitions::new {
 
 	# End Switch
     }
-    
+    # Append Global Elements Corresponding to Messages
+    foreach messageTypeElementName $messageTypeElementNames {
+	set messageTypeElement [::xml::element::append $typesSchemaElement element $xmlSchemaNS(prefix) \
+				    [list name "$messageTypeElementName" type "tns:$messageTypeElementName"]];
+    }
 
     # Do Last:
     set allDefChildren [set ${wsdlDefElement}::.PARTS]
