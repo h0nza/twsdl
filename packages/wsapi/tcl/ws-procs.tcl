@@ -14,7 +14,7 @@ proc ::<ws>return {tclNamespace} {
 	"GET" {
 
 	    set query [ns_conn query]
-	    set url [ns_conn url]
+	    set url [<ws>namespace set $tclNamespace url]
 	    set operation [ns_queryget op ""]
 
 	    if {"$query" eq "WSDL" } {
@@ -152,7 +152,7 @@ $operationLinks
 	}
 	"POST" {
 	    namespace eval $tclNamespace {
-		::wsdl::server::accept [list $serverName $serviceName $portName $bindingName [ns_conn url]] 
+		::wsdl::server::accept [list $serverName $serviceName $portName $bindingName $url] 
 	    }
 	}
     }
@@ -219,6 +219,7 @@ proc ::<ws>namespace {
 		variable hostHeader
 		variable host
 		variable port
+                variable url
 
 
 		if {"[ns_conn driver]" eq "nssock"} {
@@ -236,6 +237,11 @@ proc ::<ws>namespace {
 		    set port 80
 		}
 		set host [lindex [split $hostHeader ":"] 0]
+
+                set url [ns_conn url]
+                if {[string match "*/index.tcl" "$url"]} {
+                    set url [string range "$url" 0 end-9]
+                }
 	    }
 	    
 	}
@@ -254,7 +260,7 @@ proc ::<ws>namespace {
 		eval [concat ::wsdl::bindings::${binding}::new $tclNamespace $portType $bindingName $bindMap] 
 
 		# Combine Port
-		::wsdl::ports::new $portName $bindingName [ns_conn url]
+		::wsdl::ports::new $portName $bindingName "$url"
 		::wsdl::services::new $serviceName [list $portName]
 		::wsdl::server::new $serverName $targetNamespace [list $serviceName]
 		set ::wsdb::servers::${serverName}::hostHeaderNames $hostHeader
