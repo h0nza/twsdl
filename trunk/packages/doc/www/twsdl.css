@@ -1,7 +1,27 @@
+body { 
+  background-color:#F5F5F5;
+  font-family:Verdana, Arial, Helvetica, sans-serif;
+  margin:0px;
+  padding:0px;
+  text-align:left;
+  background-image:url("");
+	background-repeat:repeat;
+  background-attachment:fixed;
+
+ }
 
 div {
     padding:      5px;
     padding-top: 10px;
+}
+
+pre {
+  overflow:auto;
+  width:80%;
+  font-family: 'Bitstream Vera Sans Mono', 'Andale Mono', 'LucidaTypewriter', monospace;
+  background: #e7e6de;
+  border: solid 1px #aaa;
+  padding: 0px 10px 15px 10px;
 }
 
 .cat:first-line {
@@ -52,7 +72,7 @@ div {
   font-size: .8em;
 }
 
-.code-example { 
+.code-examplex { 
   background-color: #9CC;
   border-color: #360;
   border-style: solid;
@@ -102,3 +122,4 @@ div {
   content: "Warning: "
 
 }
+
