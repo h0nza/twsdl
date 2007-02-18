@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: XML API</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+
+<div class="title">United eWay tWSDL: XML API</div>
+<div class="abstract">All data exchanged in tWSDL is either in the
+ form of a serialized XML Document or is an internal representation 
+ of an XML Document. This section outlines a number of possibilities
+ for handling XML Documents, for representing them internally and the
+ API for producting them or converting from one form to another.
+</div>
+ 
+
+<div class="cat">XML Parser/XSLT: tDOM
+ <div class="body">Currently tWSDL will have an external dependency
+  on <a href="http://www.tdom.org/">tDOM</a> to parse a serialized XML Document
+  into a Tcl list. This process will guarantee that the Document was well formed, 
+  but will not check the validity of the document. tDOM is a very fast
+  XML Parser written in C with a Tcl API. In addition to XML parsing, tDOM
+  has a usable XSLT engine which can be used to process XML Documents. One
+  use for XSLT might be to create a tWSDL Client API based upon the service
+  WSDL file.
+ </div>
+</div>
+
+
+<div class="cat">Internal XML Representation: Tcl Namespace
+ <div class="body">
+ <p>Although tDOM has excellent parsing capabilities, the 
+ internal representation of XML Nodes is hidden in C language structures. 
+ Additionally, accessing these structures creates commands which pollute
+ the global namespace. The XML Standard itself recommends something called
+ an XML Infoset. As the name implies, this is a data structure, so that everything
+ should be accessible as a named variable, instead of as an object.method.
+ </p>
+ <p>Tcl has something called a Namespace which allows developers to organize data
+ and commands into a hierarchical structure similar to an XML Document. The limitations
+ on possible XML Element and Attribute names makes it easy to guarantee
+ that any XML Document can be represented as a hierarchical Tcl Namespace.
+ </p>
+ </div>
+</div>
+
+
+<div class="cat">tDOM Tcl List to Tcl Namespace API
+ <div class="body">One or more API can be used to convert a tDOM Tcl List which
+ represents an XML Document or Fragment to a Tcl Namespace structure. A bare bones
+ API would simply include the data obtained from tDOM, whereas a more complete
+ API would add additional metadata as outlined by the 
+ <a href="http://www.w3.org/TR/xml-infoset/">XML Infoset</a> recommendation.
+ <pre class="code-example" title="Tcl List to Tcl Namespace API">
+# API Signature: (this is a recursive procedure)
+::wsdl::instance::new instanceNS xmlList {isDoc 0}
+
+# For isntance:
+::wsdl::instance::new ::mytns {addressBook {} {
+ {card {type simple} {
+  {name {type full} {{#text {John Smith}}}} {
+  email {} {{#text js@example.com}}}}} {
+ card {} {{name {} {{#text {Fred Bloggs}}}} {
+  email {} {{#text fb@example.net}}}}}}} 1
+
+# This corresponds to the XML Document:
+&lt;!DOCTYPE addressBook SYSTEM "simple.dtd">
+&lt;addressBook>
+  &lt;card type="simple">
+    &lt;name type="full">John Smith&lt;/name>
+    &lt;email>js@example.com&lt;/email>
+  &lt;/card>
+  &lt;card>
+    &lt;name>Fred Bloggs&lt;/name>
+    &lt;email>fb@example.net&lt;/email>
+  &lt;/card>
+&lt;/addressBook>
+ </pre>
+ </div>
+</div>
+
+<div class="cat">Tcl Namespace to XML API
+ <div class="body">Documents will be stored using one of several possible Tcl Namespace
+ representations. When a document needs to be serialized, a corresponding API can translate
+ this into XML. Here is an example of what a document fragment would look like as 
+ a Tcl Namespace, and how it would serialize to XML.
+ <pre class="code-example" title="Tcl Namespace Representation of XML Fragment">
+namespace eval ::wsdl::instance::x::a:addresses {
+
+    set .PARTS {address::0 address::1 notes owner}
+
+    # Address is array, so dummy:
+    namespace eval address {}
+
+    namespace eval address::0 {
+	set .ATTR(name) address1
+	set .ATTR(location) home
+
+	namespace eval street {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "3812 155th Ave. SE"
+	}
+	namespace eval city {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "Bellevue"
+	}
+	namespace eval state {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "WA"
+	}
+	namespace eval zip {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "98006"
+	}
+
+	set .PARTS {street city state zip}
+
+    }
+    namespace eval address::1 {
+	set .ATTR(name) address2
+	set .ATTR(location) work
+
+	namespace eval street {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "4321 1st Ave. N"
+	}
+	namespace eval city {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "Seattle"
+	}
+	namespace eval state {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "WA"
+	}
+	namespace eval zip {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) "98102"
+	}
+
+	set .PARTS {street city state zip}
+
+    }
+
+    namespace eval notes {
+	set .PARTS {.TEXT(0) b .TEXT(1)}
+	set .TEXT(0) "
+   This is a "
+	set .TEXT(1) " idea    
+"
+	namespace eval b {
+	    set .PARTS {.TEXT(0)}
+	    set .TEXT(0) Great
+	}
+    }
+    namespace eval owner {
+	set .PARTS {}
+	set .ATTR(name) "Tom Jackson"
+    }
+}
+
+ </pre>
+ <p>Note that there are many ways to build up the above representation,
+ the one shown being very verbose. The serializing API would be called like
+ this:</p>
+ <pre class="code-example" title="Serialized XML API"> 
+
+ ::wsdl::instance::toXML ::wsdl::instance::x::a:addresses
+
+ </pre>
+ <p>Producing the following XML:</p>
+ <pre class="code-example" title="Serialized XML of Tcl Namespace">
+
+&lt;a:addresses>
+ &lt;address location="home" name="address1">
+  &lt;street>3812 155th Ave. SE&lt;/street>
+  &lt;city>Bellevue&lt;/city>
+  &lt;state>WA&lt;/state>
+  &lt;zip>98006&lt;/zip>
+ &lt;/address>
+ &lt;address location="work" name="address2">
+  &lt;street>4321 1st Ave. N&lt;/street>
+  &lt;city>Seattle&lt;/city>
+  &lt;state>WA&lt;/state>
+  &lt;zip>98102&lt;/zip>
+ &lt;/address>
+ &lt;notes>
+   This is a &lt;b>Great&lt;/b> idea    
+ &lt;/notes>
+ &lt;owner name="Tom Jackson"/>
+&lt;/a:addresses>
+
+
+ </pre>
+ <p>The <span class="code">::wsdl::instance::toXML</span> API highlights the
+ simplicity of passing a complex data structure when it is packaged as a Tcl Namespace.
+ This simplicity will be exploited throughout the tWSDL Package. The Tcl Namespace
+ representation relies on the fact that no XML Element may start with a punctuation
+ mark, in this case a dot ".". Also notice that multiple elements of the same name are
+ represented something like an array.</p>
+
+ </div>
+</div>
+
+
+<div class="cat">
+ <div class="body">
+ </div>
+</div>
+
+
+<div class="cat">
+ <div class="body">
+ </div>
+</div>
+
+
+<div class="cat">
+ <div class="body">
+ </div>
+</div>
+
+
+<div class="cat">
+ <div class="body">
+ </div>
+</div>
+
+
+<div class="cat">
+ <div class="body">
+ </div>
+</div>
+
+
+
+</body>
+</html>
