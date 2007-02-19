@@ -5,7 +5,7 @@
 # Contact: Tom Jackson <tom at junom.com>
 
 namespace eval ::xml::document {
-
+    namespace import ::tws::log::log
 }
 
 
@@ -17,14 +17,13 @@ proc ::xml::document::create {
     {attributeList {}}
 } {
 
+    log Notice "Creating XML Document in tclns $tclNamespace with de = $documentElement p = $prefix a = $attributeList"
 
     namespace eval $tclNamespace {
 	variable documentElement
     }
 
-    ::xml::element::create ${tclNamespace}::$documentElement $prefix
-
-    array set ${tclNamespace}::${documentElement}::.ATTR $attributeList
+    ::xml::element::create ${tclNamespace}::$documentElement $documentElement $prefix $attributeList
 
     set ${tclNamespace}::documentElement $documentElement
 
@@ -33,7 +32,8 @@ proc ::xml::document::create {
 }
 
 proc ::xml::document::print { documentNamespace {printer "toXMLNS"} } {
-
-    return "<?xml version=\"1.0\" encoding=\"utf-8\"?>[::xml::instance::$printer $documentNamespace]"
+    set documentElement [set ${documentNamespace}::documentElement]
+    log Notice "documentNamespace = $documentNamespace"
+    return "<?xml version=\"1.0\" encoding=\"utf-8\"?>[::xml::instance::$printer ${documentNamespace}::$documentElement]"
 
 }

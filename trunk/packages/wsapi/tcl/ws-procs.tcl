@@ -26,7 +26,7 @@ proc ::<ws>return {tclNamespace} {
 	    switch -exact -- "$mode" {
 		"wsdl" {
                     namespace eval $tclNamespace {
-		        set definitions [xml::document::print ::wsdb::definitions::${serverName}::definitions] 
+		        set definitions [xml::document::print ::wsdb::definitions::${serverName}] 
 		        ns_return 200 text/xml $definitions
 		    }
 		}
@@ -43,7 +43,7 @@ proc ::<ws>return {tclNamespace} {
 		    set binding [<ws>namespace set $tclNamespace binding]
 		    set bindingName [<ws>namespace set $tclNamespace bindingName]
 
-		    ns_log Notice "xmlPrefix = '$xmlPrefix operation = '$operation'"
+		    ns_log Debug "xmlPrefix = '$xmlPrefix operation = '$operation'"
 
 		    set messages [set ::wsdb::operations::${xmlPrefix}::${operation}::messages]
 		    set inputMessageType [::wsdl::operations::getInputMessageType $xmlPrefix $operation]
@@ -78,8 +78,8 @@ proc ::<ws>return {tclNamespace} {
 		    ::xml::element::setAttribute $inputElement "xmlns" $targetNamespace
 		    set soapBody [::wsdl::bindings::soap::createBody ${requestNamespace}::request ]
 		    ::xml::element::appendRef $soapBody $inputElement
-		    set returnBody [::xml::document::print $soapEnvelope]
 
+		    set returnBody [::xml::document::print ${requestNamespace}::request]
 		    set SOAPActionMap [set ::wsdb::bindings::${bindingName}::soapActionMap]
 		    set SOAPAction ""
 		    foreach {soapAction opName} $SOAPActionMap  {
@@ -399,7 +399,7 @@ proc ::<ws>proc {
 		set returnArgName [string range $returnArg 0 [expr $first -1 ]]
 		set returnArgType [string range $returnArg [expr $first + 1] end]
 		if {"$returnArgType" eq ""} {
-		    set returnArgrgType "xsd::string"
+		    set returnArgType "xsd::string"
 		} elseif {[string first ":" "$returnArgType"] == -1} {
 		    set returnArgType "xsd::$returnArgType"
 		}

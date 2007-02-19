@@ -11,6 +11,8 @@ namespace eval ::wsdl::bindings::soap {
     variable soapEnvelopeNS
     variable soapEnvelopeAttributes
 
+    namespace import ::tws::log::log
+
     set xmlSchemaNS(prefix) xsd
     set xmlSchemaNS(namespace) "http://www.w3.org/2001/XMLSchema"
     set xmlSchemaInstanceNS(prefix) xsi
@@ -126,8 +128,8 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	    ::wsdl::bindings::soap::appendFaultDetails $soapFault VersionMismatch {
    SOAP Envelope Version Mismatch: 
    Correct SOAP Version is http://schemas.xmlsoap.org/soap/envelope/}
-	    
-	    return [list 400 "text/xml" {} [::xml::document::print $soapEnvelope]]
+
+	    return [list 400 "text/xml" {} [::xml::document::print ${requestNamespace}::response]]
 	} 
 	# Check Element localname is Envelope
 	if {"$envelope(localName)" ne "Envelope"} {
@@ -136,7 +138,8 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 
 	    set soapFault [::wsdl::bindings::soap::createFault ${requestNamespace}::response]
 	    ::wsdl::bindings::soap::appendFaultDetails $soapFault Client {Root element was not Envelope}
-	    return [list 400 "text/xml" {} [::xml::document::print $soapEnvelope]]
+
+	    return [list 400 "text/xml" {} [::xml::document::print ${requestNamespace}::response]]
 	}
 
 	########### BODY ############
@@ -150,7 +153,8 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	    set soapFault [::wsdl::bindings::soap::createFault ${requestNamespace}::response]
 	    ::wsdl::bindings::soap::appendFaultDetails $soapFault Client "Incorrect number of children 
  in SOAP Envelope: $envelope(childCount) children"
-	    return [list 400 "text/xml" {} [::xml::document::print $soapEnvelope]]
+
+	    return [list 400 "text/xml" {} [::xml::document::print ${requestNamespace}::response]]
 	    
 	}
 	if {"$envelope(childCount)" == 2 } {
@@ -172,7 +176,8 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	    set soapFault [::wsdl::bindings::soap::createFault ${requestNamespace}::response]
 	    ::wsdl::bindings::soap::appendFaultDetails $soapFault Client "Incorrect number of children 
  in SOAP Body: $body(childCount) children"
-	    return [list 400 "text/xml" {} [::xml::document::print $soapEnvelope]]
+
+	    return [list 400 "text/xml" {} [::xml::document::print ${requestNamespace}::response]]  
 	}
 
 	set DocumentNode [lindex $body(childNodes) 0]
@@ -184,7 +189,7 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	# Convert to internal format:
 	set instanceNS "${requestNamespace}::input"
 
-	::xml::instance::new $instanceNS [$DocumentNode asList] "1"
+	::xml::instance::newXMLNS $instanceNS [$DocumentNode asList] "1"
 	set XMLdocumentElementList [namespace children $instanceNS]
 
 	if {[llength $XMLdocumentElementList] != 1} {
@@ -194,7 +199,7 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	}
 	
 	log Notice "HandleRequest request children: [namespace children $instanceNS]"
-	log Notice "HandleRequest XML = [::xml::instance::toXML "$XMLdocumentElement"]"
+	log Notice "HandleRequest XML = [::xml::instance::toXMLNS $XMLdocumentElement]"
 	# tDom doc is gone:
 	# This may not be necessary:
 	rename $requestDoc ""
@@ -206,7 +211,8 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	    set soapFault [::wsdl::bindings::soap::createFault ${requestNamespace}::response]
 	    ::wsdl::bindings::soap::appendFaultDetails $soapFault Client "Incorrect targetNamespace
   for WSDL service, should be $targetNamespace"
-	     return [list 400 "text/xml" {} [::xml::document::print $soapEnvelope]]
+
+	    return [list 400 "text/xml" {} [::xml::document::print ${requestNamespace}::response]]
 	} else {
 	    log Debug "HandleRequest correct request namespace '$targetNamespace'"
 	}
@@ -229,7 +235,8 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	    set soapFault [::wsdl::bindings::soap::createFault ${requestNamespace}::response]
 	    ::wsdl::bindings::soap::appendFaultDetails $soapFault Client "Invalid Document" \
 		"[::xml::instance::printErrors $XMLdocumentElement 5]"
-	     return [list 400 "text/xml" {} [::xml::document::print $soapEnvelope]]
+
+	    return [list 400 "text/xml" {} [::xml::document::print ${requestNamespace}::response]]
 	}
 	log Debug "HandleRequest: invoking '[set ::wsdb::operations::${portTypeNamespace}::${operation}::invoke]'"
 	# Document is valid...Invoke command
@@ -248,8 +255,8 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	# Going to return a list {status content-type headersList document}
 
 	# return what?
-	return [list 200 "text/xml" {} [::xml::document::print $soapEnvelope]]
- 
+
+	return [list 200 "text/xml" {} [::xml::document::print ${requestNamespace}::response]]
     }
 
     namespace eval ::wsdb::bindings::${bindingName} {
@@ -263,13 +270,13 @@ proc ::wsdl::bindings::soap::createBody {
 } {
     variable soapEnvelopeAttributes
     variable soapEnvelopeNS
-
+    log Notice "Creating SOAP Body............ "
     set soapPrefix $soapEnvelopeNS(prefix)
-    set soapEnvelope [::xml::document::create $tclNamespace Envelope \
+    set soapEnvelope [::xml::document::create ${tclNamespace} Envelope \
          $soapPrefix $soapEnvelopeAttributes]
 
     set soapBody [::xml::element::append $soapEnvelope Body $soapPrefix]
-
+    log Notice "Created SOAP Body..........."
     return $soapBody
     
 }
@@ -280,7 +287,7 @@ proc ::wsdl::bindings::soap::createFault {
 } {
     variable soapEnvelopeNS
 
-
+    log Notice "Creating SOAP Body with tclNamespace = $tclNamespace"
     set soapBody [::wsdl::bindings::soap::createBody $tclNamespace]
     set soapPrefix $soapEnvelopeNS(prefix)
 
@@ -297,34 +304,11 @@ proc ::wsdl::bindings::soap::appendFaultDetails {
     {details {}}
 } {
 
-    ::xml::element::appendText [::xml::element::append $soapFaultNamespace faultcode] $faultcode
-    ::xml::element::appendText [::xml::element::append $soapFaultNamespace faultstring] $faultstring
+    ::xml::element::appendText [::xml::element::append $soapFaultNamespace faultcode] .TEXT $faultcode
+    ::xml::element::appendText [::xml::element::append $soapFaultNamespace faultstring] .TEXT $faultstring
 
     if {$details ne ""} {
-	::xml::element::appendText [::xml::element::append $soapFaultNamespace details] $details
+	::xml::element::appendText [::xml::element::append $soapFaultNamespace details] .TEXT $details
     }
     return $soapFaultNamespace
 }
-
-proc ::logTrace { args } {
-    ns_log Debug $args
-}
-
-proc ::wsdl::bindings::soap::documentLiteral::HandleRequest {
-
-    requestID
-} {
-
-    log Notice "HandleRequest Starting to handle requestID = '$requestID'"
-    set requestNamespace "::request::$requestID"
-    array set requestHeaders [set ${requestNamespace}::requestHeaders]
-    log Notice "HandleRequest requestHeaders elements [array names requestHeaders]"
-    set requestFileame [set ${requestNamespace}::postFilename]
-    set requestArgs [set ${requestNamespace}::requestArgs]
-
-    # Get SoapAction
-    set SoapAction [string trim $requestHeaders(SOAPAction) "\"'"]
-    log Notice "HandleRequest SoapAction = '$SoapAction'"
-
-}
-

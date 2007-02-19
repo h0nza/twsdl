@@ -13,6 +13,8 @@ set sqns "stockquoter"
 # Trade Symbol
 ::wsdl::types::simpleType::restrictByEnumeration $sqns symbol xsd::string {MSFT WMT XOM GM F GE }
 
+::wsdl::types::simpleType::restrictByPattern $sqns Code xsd::string {[0-9]{4}}
+
 # Verbose
 ::wsdl::types::simpleType::new $sqns  verbose xsd::boolean
 
