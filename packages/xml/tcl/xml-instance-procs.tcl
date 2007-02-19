@@ -16,6 +16,39 @@ namespace eval ::xml::instance {
 
 }
 
+# Takes tDOM toList
+proc ::xml::instance::newXMLNS {tclNamespace xmlList {isDoc 0} } {
+
+    set element [lindex $xmlList 0]
+    set attributes [lindex $xmlList 1]
+    set children [lindex $xmlList 2]
+
+    foreach {prefix localname} [::xml::element::toPrefixLocalnameList $element] {}
+
+    if {$isDoc} {
+	append tclNamespace ::$localname
+	::xml::element::create $tclNamespace $localname $prefix $attributes
+	set ${tclNamespace}::documentElement $localname
+    }
+ 
+    foreach child $children {
+	# Text elements from tDOM. 
+	if {[string match #* [lindex $child 0]]} {
+	     log Notice "Adding text node ............"
+	     ::xml::element::appendText $tclNamespace [lindex $child 0] [lindex $child 1]
+	     continue
+	 }
+	foreach {childPrefix childLocalname} \
+	    [::xml::element::toPrefixLocalnameList [lindex $child 0]] {}
+
+
+	set childTclNamespace [::xml::element::append $tclNamespace $childLocalname $childPrefix [lindex $child 1]]
+	::xml::instance::newXMLNS $childTclNamespace $child
+
+    }	
+
+}
+
 
 # Problem: passing in name of current ns, not parentns on foreach.
 proc ::xml::instance::new {instanceNS xmlList {isDoc 0} } {
@@ -51,7 +84,7 @@ proc ::xml::instance::new {instanceNS xmlList {isDoc 0} } {
 
 	# Text elements from tDOM. 
 	if {[string match "\#*" "$Name"]} {
-	    set PartName ".[string range "$Name" 1 end]($Child_Count($Name))"
+	    set PartName ".[string toupper [string range "$Name" 1 end]]($Child_Count($Name))"
 	    set "${instanceNS}::$PartName" [lindex $child 1]
 	    incr Child_Count($Name)
 	    lappend ${instanceNS}::.PARTS "$PartName"
@@ -288,41 +321,38 @@ proc ::xml::instance::toXML { namespace {depth -1} {mixedParent 0} } {
     return "$output"
 }
 
+
 # TO XML USING NAMESPACE .PRFIX
-proc ::xml::instance::toXMLNS { namespace {depth -1} {mixedParent 0} } {
+proc ::xml::instance::toXMLNS { tclNamespace {depth -1} {mixedParent 0} } {
 
     incr depth
     set indent [string repeat " " $depth]
     
-    set elementName [namespace tail $namespace]
-    
-    if {[regexp {^[0-9]+$} $elementName]} {
-	set elementName [namespace tail [namespace parent $namespace]]
-    } 
-    
+    set elementName [set ${tclNamespace}::.NAME]
+
     # If parent element isn't mixed, indent
     if {!$mixedParent} {
 	append output "\n$indent"
     }
-    if {[info exists ${namespace}::.PREFIX] 
-	&& [set ${namespace}::.PREFIX] ne ""
+    if {[info exists ${tclNamespace}::.PREFIX] 
+	&& [set ${tclNamespace}::.PREFIX] ne ""
     } {
-	set prefixElementName [join [list [set ${namespace}::.PREFIX] $elementName] ":"]
+	set prefixElementName [join [list [set ${tclNamespace}::.PREFIX] $elementName] ":"]
 	#log Debug "toXMLNS prefixElementName = $prefixElementName"
     } else {
-	#log Debug "toXMLNS namespace = $namespace"
+	#log Debug "toXMLNS tclNamespace = $tclNamespace"
 	set prefixElementName $elementName
     }
     append output "<$prefixElementName"
-    #log Debug "toXML namespace = $namespace output = '$output' "
+    #log Debug "toXML tclNamespace = $tclNamespace output = '$output' "
     # NOTE: add code to ensure quoted values
-    if {[array exists ${namespace}::.ATTR]} {
-	foreach {attr val} [array get ${namespace}::.ATTR] {
+    if {[array exists ${tclNamespace}::.ATTRS]} {
+	foreach {attr val} [array get ${tclNamespace}::.ATTRS] {
 	    append output " $attr=\"$val\""
 	}
     }
     
-    if {[llength [set ${namespace}::.PARTS]] == 0} {
+    if {[llength [set ${tclNamespace}::.PARTS]] == 0} {
 	append output "/>"
 	incr depth -1
 	return $output 
@@ -331,22 +361,23 @@ proc ::xml::instance::toXMLNS { namespace {depth -1} {mixedParent 0} } {
     }
     
     # Mixed Content Check: handle whitespace exactly
-    if {[lsearch -glob [set ${namespace}::.PARTS] ".TEXT*"] > -1} {
+    if {[lsearch -glob [set ${tclNamespace}::.PARTS] [list ".TEXT" * *]] > -1} {
 	set mixedElement 1
     } else {
 	set mixedElement 0
     }
 
-    foreach child [set ${namespace}::.PARTS] {
-	switch -glob -- "$child" {
+    foreach part [set ${tclNamespace}::.PARTS] {
+	foreach {childName prefix childPart} $part { }
+	switch -glob -- "$childPart" {
 	    ".TEXT*" {
-		append output [set ${namespace}::$child]
+		append output [set ${tclNamespace}::$childPart]
 	    }
-	    ".REF*" {
-		append output [::xml::instance::toXMLNS [set ${namespace}::$child] $depth $mixedElement]
+	    "::*" {
+		append output [::xml::instance::toXMLNS $childPart $depth $mixedElement]
 	    }
 	    default {
-		append output "[::xml::instance::toXMLNS ${namespace}::$child $depth $mixedElement]"
+		append output "[::xml::instance::toXMLNS ${tclNamespace}::$childPart $depth $mixedElement]"
 	    }
 	}
     }
@@ -369,11 +400,8 @@ proc ::xml::instance::printErrors { namespace {depth -1} } {
     set indent [string repeat " " $depth]
     
     append output "\n$indent"
-    set elementName [namespace tail $namespace]
-    
-    if {[regexp {^[0-9]+$} $elementName]} {
-	set elementName [namespace tail [namespace parent $namespace]]
-    } 
+    #set elementName [namespace tail $namespace]
+    set elementName [set ${namespace}::.NAME]
 
     if {[info exists ${namespace}::.PREFIX] 
 	&& [set ${namespace}::.PREFIX] ne ""
@@ -408,14 +436,10 @@ proc ::xml::instance::printErrors { namespace {depth -1} } {
 	    }
 	    "2" {
 		set FaultElementName [lindex $FaultList 1]
-		set FaultElementIndex [lindex $FaultList 2]
-		if {$FaultElementIndex > 0} {
-		    set ChildFaultNamespace ${FaultElementName}::$FaultElementIndex
-		} else {
-		    set ChildFaultNamespace $FaultElementName
-		}
+		set FaultChild [lindex $FaultList 2]
+
 		append output "Invalid Child:"
-		append output [::xml::instance::printErrors "${namespace}::$ChildFaultNamespace" $depth]
+		append output [::xml::instance::printErrors $FaultChild $depth]
 	    }
 	    "3" {
 		lappend FaultDescriptionList "Unknown Element"
@@ -515,10 +539,10 @@ proc ::xml::instance::toText { namespace {depth -1} {mixedParent 0} } {
 proc ::xml::instance::getTextValue { namespace } {
 
     set value ""
-    foreach part [set ${namespace}::.PARTS] {
-	if {[string equal -nocase -length 5 ".TEXT" "$part"]} {
-	    append value [set ${namespace}::$part]
-	}
+    foreach textNode [lsearch -inline -all [set ${namespace}::.PARTS] {.TEXT * *}] {
+	foreach {childName prefix childVar} $textNode { }
+        log Notice "getTextValue childName = '$childName' prefix = '$prefix' childVar = '$childVar'"
+	append value [set ${namespace}::$childVar]
     }
     return $value
 
@@ -526,12 +550,13 @@ proc ::xml::instance::getTextValue { namespace } {
 
 proc ::xml::instance::checkXMLNS {instanceNS namespace} {
     
-    if {[info exists ${instanceNS}::.PREFIX]} {
+    if {[info exists ${instanceNS}::.PREFIX] && "[set ${instanceNS}::.PREFIX]" ne ""} {
 	set attribute "xmlns:[set ${instanceNS}::.PREFIX]"
     } else {
 	set attribute "xmlns"
     }
-    if {"$namespace" eq "[set ${instanceNS}::.ATTR($attribute)]"} {
+    log Notice "Checking $instanceNS for XMLNS = '$namespace' attr='$attribute'"
+    if {"$namespace" eq "[set ${instanceNS}::.ATTRS($attribute)]"} {
 	return 1
     } else {
 	return 0

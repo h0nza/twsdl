@@ -53,9 +53,28 @@ proc ::wsdl::types::simpleType::restrictByEnumeration {tns typeName baseType enu
            return 1
        } else { 
            return 0
-       }"
+         }\n"
 
     ::wsdl::schema::appendSimpleType enumeration $tns $typeName $baseType $enumerationList
+}
+
+proc ::wsdl::types::simpleType::restrictByPattern {tns typeName baseType pattern } {
+
+    namespace eval ::wsdb::types::${tns}::${typeName} [list variable base $baseType]
+    namespace eval ::wsdb::types::${tns}::${typeName} [list variable pattern $pattern]
+    namespace eval ::wsdb::types::${tns}::${typeName} "
+    variable validate \[namespace code \{::wsdb::types::${tns}::${typeName}::validate\}\]"
+
+    proc ::wsdb::types::${tns}::${typeName}::validate { value } "
+        variable base
+        variable pattern
+        if {\[::wsdb::types::\${base}::validate \$value] && \[regexp \$pattern \$value]} { 
+            return 1
+        } else { 
+            return 0
+     }"
+
+    ::wsdl::schema::appendSimpleType pattern $tns $typeName $baseType $pattern
 }
 
 
@@ -175,56 +194,65 @@ namespace eval ::wsdb::elements::${schemaAlias}::$typeName \{
         variable validate_$Element"
     }
 
-    foreach Element $Elements {
-	append script "
-        set Count($Element) 0"
-    }
-
     append script "
-        set Count(.INVALID) 0
+        array set COUNT \[array get \$\{namespace\}::.COUNT]
+        set COUNT(.INVALID) 0
 
-        set parts \[set \$\{namespace\}::.PARTS\]
+        set ElementNames \[array names MinOccurs]
 
-        foreach part \$parts \{
-            switch -glob -- \"\$part\" \{"
+        foreach ElementName \$ElementNames \{
+            if \{\$MinOccurs(\$ElementName) > 0\} \{
+                if \{!\[info exists COUNT(\$ElementName)]\} \{
+                    ::wsdl::elements::noteFault \$namespace \[list 4 \$ElementName 0 \$MinOccurs(\$ElementName)]
+                    incr COUNT(.INVALID)
+                    return 0
+                \} elseif \{\$COUNT(\$ElementName) < \$MinOccurs(\$ElementName)\} \{
+                    ::wsdl::elements::noteFaunt \$namespace \[list 4 \$ElementName \$COUNT(\$ElementName) \$MinOccurs(\$ElementName)]
+                    incr COUNT(.INVALID)
+                    return 0
+                \}
+            \}
+            if \{\[info exists COUNT(\$ElementName)] && \$COUNT(\$ElementName) > \$MaxOccurs(\$ElementName)\} \{
+                ::wsdl::elements::noteFault \$namespace \[list 5 \$ElementName \$COUNT(\$ElementName) \$MaxOccurs(\$ElementName)]
+                incr COUNT(.INVALID)
+                return 0
+            \}
+        \}
+
+        set PARTS \[set \$\{namespace\}::.PARTS]
+        ns_log Notice \"PARTS = '\$PARTS'\"
+        set COUNT(.ELEMENTS) 0
+        foreach PART \$PARTS \{
+            ns_log Notice \"Element PART = '\$PART'\"
+            incr COUNT(.ELEMENTS)
+            foreach \{childName prefix childPart\} \$PART \{\}
+            ns_log Notice \"childName prefix childPart = '\$childName' '\$prefix' '\$childPart'\"
+            if \{!\[string match ::* \$childPart]\} \{
+                set childPart \$\{namespace\}::\$childPart
+            \}
+
+            switch -glob -- \$childName \{"
 
     foreach Element $Elements {
 	append script "
-                $Element - ${Element}::* \{
-                    if \{!\[\$validate_$Element \$\{namespace\}::$Element\]\} \{  
-                        ::wsdl::elements::noteFault \$namespace \[list 2 $Element \$Count($Element)\]
-                        incr Count(.INVALID)
+                $Element \{
+                    if \{!\[\$validate_$Element \$childPart]\} \{  
+                        ::wsdl::elements::noteFault \$namespace \[list 2 $Element \$childPart\]
+                        incr COUNT(.INVALID)
                         break
-                    \} else \{
-                        incr Count($Element)
                     \}
                 \}"
 
     }
     append script "
                 default \{
-                    ::wsdl::elements::noteFault \$namespace \[list 3 \$part \[lsearch -exact \$parts \$part\]\]                    
-                    incr Count(.INVALID)
+                    ::wsdl::elements::noteFault \$namespace \[list 3 \$childName \$childPart\]                    
+                    incr COUNT(.INVALID)
                 \}
             \}
         \}
 
-        if \{\$Count(.INVALID)\} \{
-            return 0
-        \}
-        foreach element \{$Elements\} \{
-            if \{\$Count(\$element) < \$MinOccurs(\$element)\} \{
-                ::wsdl::elements::noteFault \$namespace \[list 4 \$element \$Count(\$element) \$MinOccurs(\$element)\]
-                incr Count(.INVALID)
-                continue
-            \}
-            if \{\$Count(\$element) > \$MaxOccurs(\$element)\} \{
-                ::wsdl::elements::noteFault \$namespace \[list 5 \$element \$Count(\$element) \$MaxOccurs(\$element)\]
-                incr Count(.INVALID)
-                continue
-            \}
-        \}
-        if \{\$Count(.INVALID)\} \{
+        if \{\$COUNT(.INVALID)\} \{
             return 0
         \} else \{
             return 1
@@ -247,11 +275,7 @@ proc ::wsdb::elements::${schemaAlias}::${typeName}::new \{
     foreach \{$Elements\} \$childValuesList \{ \}"
     }
     append script "
-    namespace eval \$\{instanceNamespace\} \{ \}
-    namespace eval \$\{instanceNamespace\}::$typeName \{
-    
-        set .PARTS \[list\]
-    \}"
+    set typeNS \[::xml::element::create \$\{instanceNamespace\}::$typeName $typeName\]"
         
     foreach simpleType $simpleTypesList {
 	foreach {Element Type MinOccurs MaxOccurs FacetList} $simpleType {}
@@ -260,25 +284,18 @@ proc ::wsdb::elements::${schemaAlias}::${typeName}::new \{
 	} elseif {"$MinOccurs" eq "0"} {
 	    append script "
     if \{\$$Element ne \"\"\} \{
-            namespace eval \$\{instanceNamespace\}::${typeName}::$Element \{
-            set .PARTS \{.TEXT(0)\}
-
-        \}
-        set \$\{instanceNamespace\}::${typeName}::${Element}::.TEXT(0) \"\$$Element\"
-        lappend \$\{instanceNamespace\}::${typeName}::.PARTS $Element
+            set tmpElement \[::xml::element::append \$typeNS $Element]
+            ::xml::element::appendText \$tmpElement .TEXT \"\$$Element\"
     \}"
 	} else {
 	    append script "
-    namespace eval \$\{instanceNamespace\}::${typeName}::$Element \{
-        set .PARTS \{.TEXT(0)\}
-
-    \}
-    set \$\{instanceNamespace\}::${typeName}::${Element}::.TEXT(0) \"\$$Element\"
-    lappend \$\{instanceNamespace\}::${typeName}::.PARTS $Element"
+    set tmpElement \[::xml::element::append \$typeNS $Element]
+    ::xml::element::appendText \$tmpElement .TEXT \"\$$Element\"
+"
 	}
     }
     append script "
-    return \$\{instanceNamespace\}::${typeName}
+    return \$typeNS
 \}"
     
     ::wsdl::schema::addSequence $schemaAlias $typeName $simpleTypesList 0

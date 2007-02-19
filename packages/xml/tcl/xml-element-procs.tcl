@@ -8,136 +8,132 @@ namespace eval ::xml::element {
     namespace import ::tws::log::log
 }
 
+proc ::xml::element::toPrefixLocalnameList { element } {
 
-proc ::xml::element::append { parent childName {prefix {}} {attributeList {}} } {
-    
-    # A document will only have one child, with documentElement set
-    if {[info exists ${parent}::documentElement] 
-	&& [llength [set ${parent}::.PARTS]] > 0 
-    } {
-	# Should be error
-	return ""
-    }
-    set CurrentChildrenList [set ${parent}::.PARTS]
-    
-    #log Notice "parent = $parent CurrentChildrenList = $CurrentChildrenList"
-
-    # Get list of all similarly named children. 
-    set MultiChildList [lsearch -inline -all $CurrentChildrenList ${childName}*]
-    if {[llength $MultiChildList] > 0} {
-	set ElementNamespaceTail ${childName}::[llength $MultiChildList]
+    set elementList [split $element ":"]
+    if {[llength $elementList] > 1} {
+	set prefix [lindex $elementList 0]
+	set element [lindex $elementList end]
     } else {
-	set ElementNamespaceTail $childName
+	set prefix ""
     }
-
-    #log Notice "element::append ElementNamespaceTail = $ElementNamespaceTail"
-    
-    # Create element shell:
-    ::xml::element::create ${parent}::$ElementNamespaceTail $prefix
-
-    # Add attributes to child
-    array set ${parent}::${ElementNamespaceTail}::.ATTR $attributeList
-
-    # Add child to parent
-    lappend ${parent}::.PARTS ${ElementNamespaceTail}
-
-    # Return name of child namespace (Should this be absolute or relative?
-    return ${parent}::$ElementNamespaceTail
-
-} 
-
-proc ::xml::element::appendText { elementNamespace textValue } {
-
-    # This creates variable if it doesn't exist
-    namespace eval $elementNamespace {
-	variable .TEXT
-    }
-
-    if {![info exists ${elementNamespace}::.TEXT]} {
-	set ${elementNamespace}::.TEXT(0) $textValue
-	lappend ${elementNamespace}::.PARTS .TEXT(0)
-	return "${elementNamespace}::.TEXT(0)"
-    }
-    
-    set TextPartIndexValues [lsort -integer [array names ${elementNamespace}::.TEXT]]
-
-    set NextTextIndex [expr [lindex $TextPartIndexValues end] + 1]
-
-    set ${elementNamespace}::.TEXT($NextTextIndex) $textValue
-
-    lappend ${elementNamespace}::.PARTS .TEXT($NextTextIndex)
-
-    return "${elementNamespace}::.TEXT($NextTextIndex)"
-
+    return [list $prefix $element]
 }
-
-proc ::xml::element::appendRef { elementNamespace referenceNamespace } {
-
-     # This creates variable if it doesn't exist
-    namespace eval $elementNamespace {
-	variable .REF
-    }
-   
-    if {![info exists ${elementNamespace}::.REF]} {
-	set ${elementNamespace}::.REF(0) $referenceNamespace
-	lappend ${elementNamespace}::.PARTS .REF(0)
-	return "${elementNamespace}::.REF(0)"
-    }
-
-    
-    set RefPartIndexValues [lsort -integer [array names ${elementNamespace}::.REF]]
-
-    set NextRefIndex [expr [lindex $RefPartIndexValues end] + 1]
-
-    set ${elementNamespace}::.REF($NextRefIndex) $referenceNamespace
-
-    lappend ${elementNamespace}::.PARTS .REF($NextRefIndex)
-
-    return "${elementNamespace}::.REF($NextRefIndex)"
-
-}
-
 
 # Create xml element shell with full namespace path
-proc ::xml::element::create { elementNamespace {prefix {}} } {
+proc ::xml::element::create {
+    tclNamespace
+    childLocalname
+    {prefix {}}
+    {attributeList {}}
+} {
 
-    namespace eval $elementNamespace {
+    namespace eval $tclNamespace {
+	variable .NAME 
 	variable .PARTS [list]
-	variable .ATTR
+	variable .ATTRS
+	variable .XMLNS
 	variable .PREFIX
-    } 
-    set ${elementNamespace}::.PREFIX $prefix
+	variable .COUNT
+    }
+
+    set ${tclNamespace}::.PREFIX $prefix
+    set ${tclNamespace}::.NAME $childLocalname
+    if {[llength $attributeList] > 0} {
+	array set ${tclNamespace}::.ATTRS $attributeList
+    }
+    return $tclNamespace
+}
+
+proc ::xml::element::append { 
+    tclNamespace 
+    childLocalname
+    {prefix {}}
+    {attributeList {}}
+} {
+   
+    if {![info exists ${tclNamespace}::.COUNT($childLocalname)]} {
+	set ${tclNamespace}::.COUNT($childLocalname) 1
+	set childLocalNamespace ${childLocalname}
+    } else {
+	set childLocalNamespace ${childLocalname}::[set ${tclNamespace}::.COUNT($childLocalname)]
+	incr ${tclNamespace}::.COUNT($childLocalname)
+    }
+    ::xml::element::create ${tclNamespace}::$childLocalNamespace $childLocalname $prefix $attributeList
+
+    lappend ${tclNamespace}::.PARTS [list $childLocalname $prefix $childLocalNamespace]
+
+    return ${tclNamespace}::$childLocalNamespace
+       
+}
+
+# Do I need to distinguish a ref from a regular element?
+proc ::xml::element::appendRef { 
+    tclNamespace
+    refNamespace 
+} {
+    set childLocalname [set ${refNamespace}::.NAME]
+    set prefix [set ${refNamespace}::.PREFIX]
+
+    if {![info exists ${tclNamespace}::.COUNT($childLocalname)]} {
+	set ${tclNamespace}::.COUNT($childLocalname) 1
+	set childLocalNamespace ${childLocalname}
+    } else {
+	set childLocalNamespace ${childLocalname}::[set ${tclNamespace}::.COUNT($childLocalname)]
+	incr ${tclNamespace}::.COUNT($childLocalname)
+    }
     
-    return $elementNamespace
+    lappend ${tclNamespace}::.PARTS [list $childLocalname $prefix $refNamespace]
+   
+    return $refNamespace
+}
+
+proc ::xml::element::appendText { 
+    tclNamespace
+    partName
+    textValue 
+} {
+
+    log Notice "Running appendText with partName = '$partName'"
+    # Text elements from tDOM. 
+    if {[string match "\#*" "$partName"]} {
+	set partName ".[string toupper [string range "$partName" 1 end]]"
+    }
+
+    log Notice "element::appendText trying to append $partName with value '$textValue'"
+    # This creates variable if it doesn't exist
+    namespace eval $tclNamespace [list variable $partName]
+
+    if {![array exists ${tclNamespace}::$partName]} {
+	set index 0
+	set ${tclNamespace}::${partName}(0) $textValue
+	lappend ${tclNamespace}::.PARTS [list $partName "" ${partName}(0)]
+	set ${tclNamespace}::.COUNT($partName) 1
+    } else {
+	set index [set ${tclNamespace}::.COUNT($partName)]
+	set ${tclNamespace}::${partName}($index) $textValue
+	lappend ${tclNamespace}::.PARTS [list $partName "" ${partName}($index)]
+	incr ${tclNamespace}::.COUNT($partName)
+    }
+    return "${tclNamespace}::${partName}($index)"
+
 }
 
 
-proc ::xml::element::createRef { parent childName {prefix {}} {attributeList {}} } {
+proc ::xml::element::setAttributes { tclNamespace attributeList } {
 
-    ::xml::element::create ${parent}::$childName $prefix
-
-    # Add attributes to child
-    array set ${parent}::${childName}::.ATTR $attributeList
-
-    # Return reference namespace 
-    return ${parent}::$childName
-
-} 
-
-proc ::xml::element::setAttributes { elementNamespace attributeList } {
-
-    array set ${elementNamespace}::.ATTR $attributeList
+    array set ${tclNamespace}::.ATTRS $attributeList
 }
 
-proc ::xml::element::setAttribute { elementNamespace attributeName attributeValue } {
+proc ::xml::element::setAttribute { tclNamespace attributeName attributeValue } {
 
-    set ${elementNamespace}::.ATTR($attributeName) $attributeValue
+    set ${tclNamespace}::.ATTRS($attributeName) $attributeValue
 
     return $attributeValue
 
 }
 
-proc ::xml::element::getAttribute { elementNamespace attributeName } {
+proc ::xml::element::getAttribute { tclNamespace attributeName } {
 
-    return [set ${elementNamespace}::.ATTR($attributeName)]
+    return [set ${tclNamespace}::.ATTRS($attributeName)]
 }

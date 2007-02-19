@@ -5,10 +5,10 @@
 # Contact: Tom Jackson <tom at junom.com>
 
 
-log Notice [::xml::instance::toXML \
+log Notice [::xml::instance::toXMLNS \
 		[::wsdb::elements::stockquoter::StockRequest::new ::xml::instance::[ns_rand 1000000] [list MSFT 1]]]
 
-log Notice [::xml::instance::toXML \
+log Notice [::xml::instance::toXMLNS \
 		[::wsdb::elements::stockquoter::StockQuote::new ::xml::instance::[ns_rand 1000000] [list MSFT 27.04 2006-04-11T00:00:00Z Microsoft 1 0.75 0.10]]]
 
 

@@ -82,17 +82,9 @@ proc ::wsdl::server::accept { why } {
     log Notice "wsdl::server::accept binding = $binding"
     
     # 2. Let Binding handle the request
+
     set responseList [[set ::wsdb::bindings::${binding}::handleRequest] $requestID]
-
-
-    set Vars [info vars]
-    foreach Var $Vars {
-	append data "  $Var = [set $Var]\n"
-    }
-
-    
-    log Notice "OUTPUT --> [lindex $responseList 3]"
-
+  
     ns_return [lindex $responseList 0] [lindex $responseList 1] [lindex $responseList 3]
 
 }

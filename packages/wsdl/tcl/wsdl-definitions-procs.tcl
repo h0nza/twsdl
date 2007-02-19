@@ -213,12 +213,17 @@ proc ::wsdl::definitions::new {
     }
 
     # Do Last:
+    # Note that we have to rearrange the order of the elements (very ugly, sorry)
     set allDefChildren [set ${wsdlDefElement}::.PARTS]
-    set sortedMessages [lsort [lsearch -all -inline $allDefChildren "message*"]]
-    set sortedBindings [lsort [lsearch -all -inline $allDefChildren "binding*"]]
-    set sortedPortTypes [lsort [lsearch -all -inline $allDefChildren "portType*"]]
 
-    set ${wsdlDefElement}::.PARTS [concat types $sortedMessages $sortedPortTypes $sortedBindings service]
+    # These elements are not sorted, and don't need to be
+    set sortedTypes     [lsearch -all -inline $allDefChildren [list types * *]]
+    set sortedMessages  [lsearch -all -inline $allDefChildren [list message * *]]
+    set sortedBindings  [lsearch -all -inline $allDefChildren [list binding * *]]
+    set sortedPortTypes [lsearch -all -inline $allDefChildren [list portType * *]]
+    set sortedServices  [lsearch -all -inline $allDefChildren [list service * *]]
+
+    set ${wsdlDefElement}::.PARTS [concat $sortedTypes $sortedMessages $sortedPortTypes $sortedBindings $sortedServices]
 
     return $wsdlDefElement
 }
