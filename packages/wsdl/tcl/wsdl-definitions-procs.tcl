@@ -154,6 +154,14 @@ proc ::wsdl::definitions::new {
 		set xmlSchemaType 0
 	    }
 	}
+	# At some point, we may import schema items (so that we can keep them in separate
+        # namespaces) For now we need to derive them all from xsd. So baseAlias should
+        # either be xsd or the alias for the service schema types. 
+        # If so, set baseAlias  to the string tns.
+
+	if {"$baseTargetNamespace" eq "$targetNamespace"} {
+	    set baseAlias "tns"
+        }
 
 	switch -exact "$schemaItemType" {
 	    "simple" {
@@ -180,6 +188,15 @@ proc ::wsdl::definitions::new {
 	    }
 	    "pattern" {
 		# Not done yet
+		set simpleTypeElement [::xml::element::append $typesSchemaElement simpleType \
+					   $xmlSchemaNS(prefix) [list name "$schemaItem"]];
+		set restrictionElement [::xml::element::append $simpleTypeElement \
+					    restriction $xmlSchemaNS(prefix) \
+					    [list base "${baseAlias}:${schemaItemBase}"]];
+		set patternData [set ::wsdb::schema::${tnsAlias}::${schemaItem}::data]
+		::xml::element::append $restrictionElement pattern $xmlSchemaNS(prefix) \
+		    [list value $patternData];
+
 	    }
 	    "sequence" {
 		set complexTypeElement [::xml::element::append $typesSchemaElement complexType \

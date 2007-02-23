@@ -275,6 +275,7 @@ proc ::wsdb::elements::${schemaAlias}::${typeName}::new \{
     foreach \{$Elements\} \$childValuesList \{ \}"
     }
     append script "
+
     set typeNS \[::xml::element::create \$\{instanceNamespace\}::$typeName $typeName\]"
         
     foreach simpleType $simpleTypesList {
@@ -284,13 +285,11 @@ proc ::wsdb::elements::${schemaAlias}::${typeName}::new \{
 	} elseif {"$MinOccurs" eq "0"} {
 	    append script "
     if \{\$$Element ne \"\"\} \{
-            set tmpElement \[::xml::element::append \$typeNS $Element]
-            ::xml::element::appendText \$tmpElement .TEXT \"\$$Element\"
+        ::xml::element::appendText \[::xml::element::append \$typeNS $Element] .TEXT \$$Element
     \}"
 	} else {
 	    append script "
-    set tmpElement \[::xml::element::append \$typeNS $Element]
-    ::xml::element::appendText \$tmpElement .TEXT \"\$$Element\"
+    ::xml::element::appendText \[::xml::element::append \$typeNS $Element] .TEXT \$$Element
 "
 	}
     }
