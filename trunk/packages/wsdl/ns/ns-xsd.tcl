@@ -23,6 +23,15 @@
 # dateTime
 ::wsdl::types::primitiveType::new xsd dateTime "return \[::wsdb::types::tcl::dateTime::toArray \$value returnArray\]" "xml schema dateTime type"
 
+# duration
+::wsdl::types::primitiveType::new xsd duration "return \[::wsdb::types::tcl::dateTime::durationToArray \$value returnArray\]" "xml schema duration type"
+
+proc ::wsdb::types::xsd::duration::validate { duration } {
+
+    return [::wsdb::types::tcl::dateTime::durationToArray $duration returnArray]
+}
+
+
 # boolean
 ::wsdl::types::simpleType::restrictByEnumeration xsd boolean xsd::string {0 1 true false}
 
