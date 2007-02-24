@@ -1,0 +1,154 @@
+# Simple API for defining service quickly:
+
+namespace eval ::wsdl::simple-api { }
+
+proc ::wsdl::simple-api::new {
+    tnsAlias
+    wsdlDefinitionList
+
+} {
+    
+    set serverName          [lindex $wsdlDefinitionList 0]
+    set targetNamespaceBase [lindex $wsdlDefinitionList 1]
+    set hostHeaderNames     [lindex $wsdlDefinitionList 2]
+    set OperationsList      [lindex $wsdlDefinitionList 3]
+
+    # Derived Information:
+    set targetNamespace "[string trimright $targetNamespaceBase "/"]/$serverName"
+    set apiCallList [list]
+    set ElementCalls ""
+    set MessageCalls ""
+
+    # process OperationsList
+    foreach Operation $OperationsList {
+	# used to call apis
+	set Parameters            [list]
+	set ElementChildList      [list]
+	set ConversionList        [list]
+	set OperationNameTemplate [lindex $Operation 0]
+	set ProcedureType         [lindex $Operation 1]
+	set ProcedureName         [lindex $Operation 2]
+	set ParameterList         [lindex $Operation 3]
+	set ProcedureReturnMap    [lindex $Operation 4]
+
+	# try to mesh up ParameterList and ParameterTypeMap
+	set ParameterNumber 0
+	foreach Parameter $ParameterList {
+	    set ParameterName       [lindex $Parameter 0]
+	    if {[string first "-" $ParameterName] == 0 || [llength $Parameter] == 3} {
+		# Parameter is optional
+		set ParameterDefault [lindex $Parameter 1]
+		set ParameterConfig  [lindex $Parameter 2]
+		set ParameterHasDefault 1
+		set ParameterMinOccurs 0
+	    } else {
+		set ParameterConfig  [lindex $Parameter 1]
+		set ParameterHasDefault 0
+		set ParameterMinOccurs 1
+	    }
+
+	    if {[llength $ParameterConfig] == 0 } {
+		set ParameterNameTrimmed [string trimleft $ParameterName "-"]
+		set ParameterElementName "[string toupper [string range $ParameterNameTrimmed 0 0]][string range $ParameterNameTrimmed 1 end]"
+
+		set ParameterType "string"
+		set ParameterNS "xsd"
+	    } else {
+		set ParameterElementName [lindex $ParameterConfig 0]
+		set ParameterTypePath    [lindex $ParameterConfig 1]
+		set ParameterType        [namespace tail $ParameterTypePath]
+		set ParameterNS          [namespace qualifiers $ParameterTypePath]
+
+		if {"$ParameterType" eq ""} {
+		    set ParameterType "string"
+		}
+		if {"$ParameterNS" eq ""} {
+		    set ParameterNS "xsd"
+		}
+
+	    }
+	    set ElementChildDef [list $ParameterElementName "${ParameterNS}::${ParameterType}" $ParameterMinOccurs]
+
+	    lappend ElementChildList $ElementChildDef
+
+	    lappend ConversionList [list $ParameterElementName $ParameterName 
+	    incr ParameterNumber
+	}
+	set ElementCall "\neval \[::wsdl::elements::modelGroup::sequence::new $tnsAlias ${OperationNameTemplate}Req \{
+  \{[join $ElementChildList "\}\n  \{"]\}
+\}\]"
+	append ElementCall "\neval \[::wsdl::elements::modelGroup::sequence::new $tnsAlias ${OperationNameTemplate}Resp \{
+  $ProcedureReturnMap
+\}\]"
+	append ElementCalls "\n$ElementCall"
+
+	append MessageCalls "\neval \[::wsdl::messages::new $tnsAlias ${OperationNameTemplate}ReqMsg ${OperationNameTemplate}Req \]"
+	append MessageCalls "\neval \[::wsdl::messages::new $tnsAlias ${OperationNameTemplate}RespMsg ${OperationNameTemplate}Resp \]"
+
+	append OperationCalls "\neval \[::wsdl::operations::new $tnsAlias ${OperationNameTemplate}Op \{$ProcedureName}"
+	
+    }
+
+    set vars [info vars]
+    set output ""
+    foreach var $vars {
+	if {[array exists $var]} {
+	    set arrayNames [array names $var]
+	    append output "Array $var\n"
+	    foreach arrayName $arrayNames {
+		append output " ${var}\($arrayName\) = '[set ${var}($arrayName)]'\n"
+	    }
+	} else {
+	    append output " $var = '[set $var]'\n"
+	}
+    }
+
+    return "$ElementCalls\n\n$MessageCalls"
+}
+
+set tnsAlias "vs"
+set output [::wsdl::simple-api::new $tnsAlias {
+    "VSObjects"
+    "http://example.com"
+    "maria:8080"
+    
+    {
+	{"GetObjectID"
+	    ad_proc ::vs::objects::get_object_id {
+		{type_key {TypeKey integer}}
+		{key_value {KeyValue integer}}
+ 	    } {
+		{ObjectID xsd::integer}
+	    }
+	}
+	
+	{"CanUserAdministerObject"
+	    ad_proc ::vs::objects::can_user_administer_object { 
+		{-user_id "" {UserID integer}}
+		{object_id {ObjectID integer}}
+	    } {
+		{CanAdminister boolean}
+	    }
+	}
+	
+	{"BogusArgParseEg"
+	    ad_proc ::vs::objects::testargs {
+		{-myArgA "valA"}
+		{-myArgB "valB" {MyArgB boolean}}
+		myArgC
+		{myArgD {MyArgD boolean}}
+		{myDefaultArgE "some default e val" {}}
+		{myDefaultArgF "1" {MyDefaultArgF boolean}}
+	    } {
+		{MyResponseArgA xsd::string}
+		{MyResponseArgB xsd::integer}
+		{MyOptionalResponseArgC xsd::boolean 0} 
+	    }
+	}
+    }
+}]
+	    
+
+ns_return 200 text/plain $output
+
+

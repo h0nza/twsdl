@@ -1,0 +1,39 @@
+# Run this script from command line tclsh
+set Directory [file dirname [info script]]
+
+proc findTclFiles { {directory "./"} } {
+
+    set Files [glob -nocomplain  -directory "$directory" *.tcl]
+    set Directories [glob -nocomplain -directory "$directory" -types {d} *]
+    foreach Directory "$Directories" {
+	set DirFiles [lsort [findTclFiles "$Directory"]]
+	if {[llength $DirFiles] > 0} {
+	    set Files [concat $Files $DirFiles]
+	}
+    }
+    return $Files
+}
+
+
+set Files [findTclFiles "./"]
+puts [lindex $Files 0]
+set CopyrightFile [open "copyright-notice.txt" r]
+set Copyright [read $CopyrightFile]
+close $CopyrightFile
+
+foreach File $Files {
+    set FDIn  [open ${File} r]
+    fconfigure $FDIn -translation binary -encoding binary
+    set OriginalText [read $FDIn]
+    close $FDIn
+
+    if {[string first "$Copyright" "$OriginalText"] < 0} {
+	set FDOut [open ${File}.tmp w+]
+	fconfigure $FDOut -translation binary -encoding binary
+	puts  $FDOut $Copyright
+	puts  $FDOut $OriginalText
+	close $FDOut
+	file rename -force ${File}.tmp $File
+	puts "Added Copyright to $File"
+    }
+}
