@@ -87,7 +87,6 @@ proc ::wsdb::types::tcl::dateTime::validate { datetime } {
     return [::wsdb::types::tcl::dateTime::toArray $datetime returnArray]
 }
 
-
 namespace eval ::wsdb::types::tcl::dateTime {
 
 
@@ -139,11 +138,11 @@ namespace eval ::wsdb::types::tcl::dateTime {
 	upvar $arrayName D
 	
 	set PositivityRequired {(?:(\-)?(P){1})}
-	set YMDOptional {((?:([0-9]+)([Y]{1}))?(?:([0-9]+)([M]{1}))?(?:([0-9]+)([D]{1}))?)?}
+	set YMDOptional {((?:([0-9]+)([Y]{1}))?(?:([1-9][0-9]+)([M]{1}))?(?:([0-9]+)([D]{1}))?)?}
 	set TRequired {(T){1}}
 	set HourHNR {(?:([0-9]+)([H]{1}))?}
-	set MinuteMNR {(?:([0-9]+)(M){1})?}
-	set SecondSNR {(?:([0-9]+(?:\.[0-9]+))?(S){1})?}
+	set MinuteMNR {(?:([1-9][0-9]*)(M){1})?}
+	set SecondSNR {(?:([0-9]+(?:\.[0-9]+)?)?(S){1})?}
 	
 	set PYMDOptional ${PositivityRequired}${YMDOptional}
 	set THMSOptional (?:${TRequired}(${HourHNR}${MinuteMNR}${SecondSNR}){1})?
@@ -165,30 +164,46 @@ namespace eval ::wsdb::types::tcl::dateTime {
 	upvar $startTimeArray S
 	upvar $durationArray D
 	upvar $endTimeArray E
-	
+
+	# Positivity
+	set Pos $D(positivity)
+	if {"$Pos" eq "-"} {
+	    set Neg -1
+	} else {
+	    set Neg 1
+	}
+
+	foreach arrayItem [array names D] {
+	    if {"$D($arrayItem)" eq "0"} {
+		continue
+	    }
+	    set D($arrayItem) [string trimleft $D($arrayItem) 0]
+	}
+
 	# Months (may be modified additionally below) 
-	set Temp [expr $S(month) + $D(month)]
+	set Temp [expr $S(month) + ${Pos}$D(month)]
 	set E(month) [modulo2 $Temp 1 13]
 	set Carry [fQuotient2 $Temp 1 13]
 
 	# Years (may be modified additionally below) 
-	set E(year) [expr $S(year) + $D(year) + $Carry]
+	set E(year) [expr $S(year) + ${Pos}$D(year) + $Carry]
 	
 	# Timezone
-	set E(zone) $S(zone)
-	
+	#set E(zone) $S(zone)
+	set E(Timezone) $S(Timezone)
+
 	# Seconds
-	set Temp [expr $S(second) + $D(second)]
+	set Temp [expr $S(second) + ${Pos}$D(second)]
 	set E(second) [modulo $Temp 60]
 	set Carry [fQuotient $Temp 60]
 	
 	# Minutes
-	set Temp [expr $S(minute) + $D(minute) + $Carry]
+	set Temp [expr $S(minute) + ${Pos}$D(minute) + $Carry]
 	set E(minute) [modulo $Temp 60]
 	set Carry [fQuotient $Temp 60]
 	
 	# Hours
-	set Temp [expr $S(hour) + $D(hour) + $Carry]
+	set Temp [expr $S(hour) + ${Pos}$D(hour) + $Carry]
 	set E(hour) [modulo $Temp 24]
 	set Carry [fQuotient $Temp 24]
 	
@@ -201,7 +216,7 @@ namespace eval ::wsdb::types::tcl::dateTime {
 	    set TempDays $S(day)
 	}
 	
-	set E(day) [expr $TempDays + $D(day) + $Carry]
+	set E(day) [expr $TempDays + ${Pos}$D(day) + $Carry]
 	
 	# Start Loop
 	
@@ -209,10 +224,10 @@ namespace eval ::wsdb::types::tcl::dateTime {
 	    
 	    if {$E(day) < 1} {
 		set E(day) [expr $E(day) + [maximumDayInMonthFor $E(year) [expr $E(month) -1]]]
-		incr Carry -1
+		set Carry  -1
 	    } elseif {$E(day) > [maximumDayInMonthFor $E(year) $E(month)]} {
 		set E(day) [expr $E(day) - [maximumDayInMonthFor $E(year) $E(month)]]
-		incr Carry
+		set Carry 1
 	    } else {
 		break
 	    }
