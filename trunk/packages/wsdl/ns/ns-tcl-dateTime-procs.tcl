@@ -131,6 +131,39 @@ namespace eval ::wsdb::types::tcl::dateTime {
 	}
 	
     }
+
+    proc formatDateTime { dateTimeArray } {
+
+	upvar $dateTimeArray D
+	
+	#set Positivity $D(Positivity)
+	set Year  [format "%.4d" $D(year)]
+	set Month [format "%.2d" $D(month)]
+	set Day   [format "%.2d" $D(day)]
+	
+	set YMD   [join [list $Year $Month $Day] -]
+	
+	set Hour  [format "%.2d" $D(hour)]
+	set Minute [format "%.2d" $D(minute)]
+	
+	set secondList  [split $D(second) .]
+	if {"[string trimleft [set SecondWhole [lindex $secondList 0]]]" eq ""} {
+	    set SecondWhole 0
+	} 
+	set SecondWhole [format "%.2d" $SecondWhole]
+	if {"[set secondFraction [string trimright [lindex $secondList 1] 0]]" ne ""} {
+	    set decimal "."
+	} else {
+	    set decimal ""
+	}
+	set Second [join [list $SecondWhole $decimal $secondFraction] ""]
+	
+	set HMS [join [list $Hour $Minute $Second] :]
+	
+	set Timezone $D(Timezone)
+	
+	return [join [list $YMD T $HMS $Timezone] ""]
+    }
     
     
     proc durationToArray { duration arrayName } {

@@ -18,7 +18,26 @@
     {StartDateTime:dateTime}
     {Duration:duration}
 } {
-    return [list $StartDateTime $Duration [::wsdb::types::tcl::dateTime::durationToArray $Duration $StartDateTime]]
+
+    set dateValid [::wsdb::types::tcl::dateTime::toArray $StartDateTime inDateArray]  
+    set durationValid [::wsdb::types::tcl::dateTime::durationToArray $Duration durationArray]
+    array set tmpDurationArray [array get durationArray]
+
+    foreach {element value} {year 0 month 0 day 0 hour 0 minute 0 second 0} {
+
+	if {"$durationArray($element)" eq ""} {
+	    set tmpDurationArray($element) "$value"
+	}
+    }    
+    
+    ::wsdb::types::tcl::dateTime::addDuration inDateArray tmpDurationArray outDateArray
+
+    ::tws::log::log Notice "AddDurationToDateTime: Finished adding duration, formatting"
+
+    set outDate [::wsdb::types::tcl::dateTime::formatDateTime outDateArray]   
+
+    return [list $StartDateTime $Duration $outDate]
+
 } returns {StartDateTime:dateTime Duration:duration EndDateTime:dateTime}
 
 set minusOptional {(-)?}
@@ -50,33 +69,34 @@ set gYearMonthAnchored "\\A${gYearMonth}\\Z"
 set gMonthDay ${month}(?:-)${day}
 set gMonthDayAnchored "\\A${gMonthDay}\\Z"
 
-# minusOptional
-::wsdl::types::simpleType::restrictByPattern \
-    datetime minusOptional xsd::string $minusOptionalAnchored;
+# <ws>type API examples:
+<ws>type pattern datetime::word {[^[:space:]]}
 
-::wsdl::types::simpleType::restrictByPattern \
-    datetime year xsd::integer $yearAnchored
+<ws>type enumeration datetime::dayName {Monday Tuesday
+    Wednesday Thursday Friday Saturday Sunday} datetime::word
 
-::wsdl::types::simpleType::restrictByPattern \
-    datetime timeZone xsd::string $timezoneAnchored
+<ws>type enumeration datetime::dayNumber {0 1 2 3 4 5 6} xsd::integer
 
-::wsdl::types::simpleType::restrictByPattern \
-    datetime gYear xsd::string $gYearAnchored
+<ws>type pattern datetime::minusOptional $minusOptionalAnchored
+<ws>type pattern datetime::year $yearAnchored xsd::integer
+<ws>type pattern datetime::timeZone $timezoneAnchored
+<ws>type pattern datetime::gYear $gYearAnchored
+<ws>type pattern datetime::gMonth $gMonthAnchored
+<ws>type pattern datetime::gDay $gDayAnchored
+<ws>type pattern datetime::gYearMonth $gYearMonthAnchored
+<ws>type pattern datetime::gMonthDay $gMonthDayAnchored
 
-::wsdl::types::simpleType::restrictByPattern \
-    datetime gMonth  xsd::string $gMonthAnchored
 
-::wsdl::types::simpleType::restrictByPattern \
-    datetime gDay  xsd::string $gDayAnchored
+<ws>type pattern datetime::gMonthDay $gMonthDayAnchored
 
-::wsdl::types::simpleType::restrictByPattern \
-    datetime gYearMonth  xsd::string $gYearMonthAnchored
-
-::wsdl::types::simpleType::restrictByPattern \
-    datetime gMonthDay  xsd::string $gMonthDayAnchored
-
-::wsdl::types::simpleType::restrictByPattern \
-    datetime SQL-Year-Month-Interval datetime::duration {P\p{Nd}{4}Y\p{Nd}{2}M}
+<ws>proc ::datetime::DayNameFromNumber {
+    {DayNumber:datetime::dayNumber}
+} {
+    return [lindex {
+	Monday Tuesday
+	Wednesday Thursday Friday
+	Saturday Sunday} $DayNumber]
+} returns {DayName:datetime::dayName}
 
 <ws>namespace finalize ::datetime
 
