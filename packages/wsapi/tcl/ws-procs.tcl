@@ -166,6 +166,17 @@ proc ::<ws>namespace {
 } {
     # Allow Freezing webservice
     switch -exact -- "$subcmd" {
+	"exists" {
+	    return [namespace exists $tclNamespace]
+
+	}
+	"isFrozen" {
+	    if {[info exists ${tclNamespace}::frozen] && [set ${tclNamespace}::frozen] == 1} {
+		return 1
+	    } else {
+		return 0
+	    }
+	}   
 	"freeze" {
 	    namespace eval $tclNamespace {
 		variable frozen 1
@@ -178,13 +189,7 @@ proc ::<ws>namespace {
 	    }
 	    return 0
 	}
-	"isFrozen" {
-	    if {[info exists ${tclNamespace}::frozen] && [set ${tclNamespace}::frozen] == 1} {
-		return 1
-	    } else {
-		return 0
-	    }
-	}   
+
     }
 
     # still return values of variables:
@@ -220,30 +225,37 @@ proc ::<ws>namespace {
 		variable host
 		variable port
                 variable url
+		variable types
 
-
-		if {"[ns_conn driver]" eq "nssock"} {
+		if {[ns_conn isconnected]} {
+		    if {"[ns_conn driver]" eq "nssock"} {
+			set protocol http
+		    } else {
+			set protocol https
+		    }
+		    set hostHeader [ns_set iget [ns_conn headers] host]
+		    set hostHeaderList [split $hostHeader ":"]
+		    if {[llength $hostHeaderList] == 2} {
+			set host [lindex $hostHeaderList 0]
+			set port [lindex $hostHeaderList 1]
+		    } else {
+			set host $hostHeader
+			set port 80
+		    }
+		    set host [lindex [split $hostHeader ":"] 0]
+		    
+		    set url [ns_conn url]
+		    if {[string match "*/index.tcl" "$url"]} {
+			set url [string range "$url" 0 end-9]
+		    }
+		} else {
 		    set protocol http
-		} else {
-		    set protocol https
+		    set host localhost
+		    set port 8080
+		    set url /ws/$targetNamespace/
 		}
-		set hostHeader [ns_set iget [ns_conn headers] host]
-		set hostHeaderList [split $hostHeader ":"]
-		if {[llength $hostHeaderList] == 2} {
-		    set host [lindex $hostHeaderList 0]
-		    set port [lindex $hostHeaderList 1]
-		} else {
-		    set host $hostHeader
-		    set port 80
-		}
-		set host [lindex [split $hostHeader ":"] 0]
-
-                set url [ns_conn url]
-                if {[string match "*/index.tcl" "$url"]} {
-                    set url [string range "$url" 0 end-9]
-                }
+		
 	    }
-	    
 	}
 	"finalize" {
 	    namespace eval $tclNamespace {
@@ -448,3 +460,93 @@ proc ::<ws>proc {
     # Debug return, remove when done:
     
 }
+
+proc ::<ws>type {
+    subcmd
+    typeName
+    args
+} {
+    # Convenience hackery:
+    set typeParts [split [string trim $typeName :] :]
+    set tnsAlias [lindex $typeParts 0]
+    set tclNamespace ::$tnsAlias
+    set name [lindex $typeParts end]
+
+    if {![<ws>namespace exists $tclNamespace]} {
+	<ws>namespace init $tclNamespace
+    }
+    
+    switch -exact -- $subcmd {
+	"exists" {
+	    return [info exists ${tclNamespace}::types($name)]
+	}
+    }
+
+    switch -glob -- $subcmd {
+
+	"sim*" {
+
+	    if {"[set base [lindex $args 0]" eq ""} {
+		set base "xsd::string"
+	    }
+
+	    ::wsdl::types::simpleType::new $tnsAlias $name $base
+
+	    set ${tclNamespace}::types($name) [list base $base]
+
+	}
+
+	"enum*" {
+	    # <ws>type enum namespace::name enum {base xsd::string}
+
+	    set enum  [lindex $args 0]
+	    set base [lindex $args 1]
+	    if {"$base" eq ""} {
+		set base "xsd::string"
+	    }
+	    
+	    ::wsdl::types::simpleType::restrictByEnumeration $tnsAlias \
+		$name $base $enum
+
+	    set ${tclNamespace}::types($name) [list base $base enum $enum]
+
+	}
+	
+	"pat*" {
+
+	    set pattern  [lindex $args 0]
+	    set base     [lindex $args 1]
+	    if {"$base" eq ""} {
+		set base "xsd::string"
+	    }
+	    ::wsdl::types::simpleType::restrictByPattern $tnsAlias \
+		$name $base $pattern
+
+	    set ${tclNamespace}::types($name) [list base $base pattern $pattern]
+
+	}
+
+	"q*" {
+
+	    if {[<ws>type exists $typeName]} {
+		return [set ${tclNamespace}::types($name)]
+	    } else {
+		return {}
+	    }
+	}
+
+	"valid*" {
+
+	}
+
+	default {
+
+	}
+
+    }
+
+}
+
+ns_log Notice ">>>>>>>>>>>>>>>>>>>>>>LOADED WS PROCS<<<<<<<<<<<<<<<<<<<"
+
+ns_log Notice "<ws>type exists datetime::x = [<ws>type exists datetime::x]"
