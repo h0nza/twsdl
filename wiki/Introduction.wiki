@@ -2,10 +2,9 @@ tWSDL -- Tcl API for WSDL Server/Client
 
 = Introduction =
 
-Add your content here.
+This projects gives you the ability to easily use SOAP and web services from Tcl.
 
-
-= Details =
+= Installation =
 
 Installation (temporary instructions)
 
