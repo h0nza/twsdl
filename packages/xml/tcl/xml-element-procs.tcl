@@ -94,13 +94,11 @@ proc ::xml::element::appendText {
     textValue 
 } {
 
-    log Notice "Running appendText with partName = '$partName'"
     # Text elements from tDOM. 
     if {[string match "\#*" "$partName"]} {
 	set partName ".[string toupper [string range "$partName" 1 end]]"
     }
 
-    log Notice "element::appendText trying to append $partName with value '$textValue'"
     # This creates variable if it doesn't exist
     namespace eval $tclNamespace [list variable $partName]
 

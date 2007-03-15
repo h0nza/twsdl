@@ -541,7 +541,6 @@ proc ::xml::instance::getTextValue { namespace } {
     set value ""
     foreach textNode [lsearch -inline -all [set ${namespace}::.PARTS] {.TEXT * *}] {
 	foreach {childName prefix childVar} $textNode { }
-        log Notice "getTextValue childName = '$childName' prefix = '$prefix' childVar = '$childVar'"
 	append value [set ${namespace}::$childVar]
     }
     return $value
