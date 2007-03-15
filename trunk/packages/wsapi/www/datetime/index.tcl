@@ -87,8 +87,6 @@ set gMonthDayAnchored "\\A${gMonthDay}\\Z"
 <ws>type pattern datetime::gMonthDay $gMonthDayAnchored
 
 
-<ws>type pattern datetime::gMonthDay $gMonthDayAnchored
-
 <ws>proc ::datetime::DayNameFromNumber {
     {DayNumber:datetime::dayNumber}
 } {

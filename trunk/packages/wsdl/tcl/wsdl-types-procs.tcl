@@ -36,6 +36,8 @@ proc ::wsdl::types::simpleType::new {tns typeName {base "tcl::anySimpleType"} } 
 proc ::wsdl::types::primitiveType::new {tns typeName code description} {
 
     namespace eval ::wsdb::types::${tns}::$typeName [list variable description "$description"]
+    namespace eval ::wsdb::types::${tns}::${typeName} "
+    variable validate \[namespace code \{::wsdb::types::${tns}::${typeName}::validate\}\]"
 
     proc ::wsdb::types::${tns}::${typeName}::validate { value } $code
 }
@@ -220,18 +222,14 @@ namespace eval ::wsdb::elements::${schemaAlias}::$typeName \{
         \}
 
         set PARTS \[set \$\{namespace\}::.PARTS]
-        ns_log Notice \"PARTS = '\$PARTS'\"
         set COUNT(.ELEMENTS) 0
+
         foreach PART \$PARTS \{
-            ns_log Notice \"Element PART = '\$PART'\"
             incr COUNT(.ELEMENTS)
             foreach \{childName prefix childPart\} \$PART \{\}
-            ns_log Notice \"childName prefix childPart = '\$childName' '\$prefix' '\$childPart'\"
-            if \{!\[string match ::* \$childPart]\} \{
-                set childPart \$\{namespace\}::\$childPart
-            \}
+            set childPart \[::xml::normalizeNamespace \$namespace \$childPart] 
 
-            switch -glob -- \$childName \{"
+            switch -exact -- \$childName \{"
 
     foreach Element $Elements {
 	append script "
@@ -295,10 +293,10 @@ proc ::wsdb::elements::${schemaAlias}::${typeName}::new \{
     }
     append script "
     return \$typeNS
-\}"
+\}
     
-    ::wsdl::schema::addSequence $schemaAlias $typeName $simpleTypesList 0
-
+::wsdl::schema::addSequence \"$schemaAlias\" \"$typeName\" \"$simpleTypesList\" 0
+"
     return $script 
 }
 

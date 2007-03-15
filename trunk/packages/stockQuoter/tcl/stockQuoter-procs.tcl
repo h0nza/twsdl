@@ -88,7 +88,7 @@ proc ::sq::mystockquote { symbol {verbose 1} } {
 
     set StockValue [format %0.2f [expr 25.00 + [ns_rand 4].[format %0.2d [ns_rand 99]]]]
     if {$verbose} {
-	return [list $symbol $StockValue 2006-04-11T00:00:00Z Microsoft 1 0.75 0.10]
+	return [list $symbol $StockValue 2006-04-11T00:00:00Z "Microsoft Corp." 1 0.75 0.10]
     } else {
 	return [list $symbol $StockValue]
     }

@@ -6,6 +6,11 @@
 
 # potential webservice interface layer:
 
+proc ::<ws>log { level args } {
+
+    return [::tws::log::log $level [join $args " "]]
+}
+
 proc ::<ws>return {tclNamespace} {
 
     set method [string toupper [ns_conn method]]
@@ -43,11 +48,12 @@ proc ::<ws>return {tclNamespace} {
 		    set binding [<ws>namespace set $tclNamespace binding]
 		    set bindingName [<ws>namespace set $tclNamespace bindingName]
 
-		    ns_log Debug "xmlPrefix = '$xmlPrefix operation = '$operation'"
+		    <ws>log Debug "xmlPrefix = '$xmlPrefix operation = '$operation'"
 
 		    set messages [set ::wsdb::operations::${xmlPrefix}::${operation}::messages]
 		    set inputMessageType [::wsdl::operations::getInputMessageType $xmlPrefix $operation]
-		    set inputMessageConv [set ::wsdb::elements::${xmlPrefix}::${inputMessageType}::conversionList]
+		    set inputMessageConv [set ::wsdb::operations::${xmlPrefix}::${operation}::conversionList]
+		    #set inputMessageConv [set ::wsdb::elements::${xmlPrefix}::${inputMessageType}::conversionList]
 		    set inputMessageSignature [list]
                     set inputFormElements ""
 		    set missing 0
@@ -73,6 +79,7 @@ proc ::<ws>return {tclNamespace} {
 		    if {[llength $inputMessageSignature] < 2} {
 			set inputMessageSignature [lindex $inputMessageSignature 0]
 		    }
+		    <ws>log Debug "<ws>return inputMessageSignature = '$inputMessageSignature'"
 		    set inputElement [::wsdb::elements::${xmlPrefix}::${inputMessageType}::new $inputXMLNS "$inputMessageSignature"]
 		    set targetNamespace [<ws>namespace set $tclNamespace targetNamespace]
 		    ::xml::element::setAttribute $inputElement "xmlns" $targetNamespace
@@ -225,7 +232,9 @@ proc ::<ws>namespace {
 		variable host
 		variable port
                 variable url
+		variable schemaIsInitialized 0
 		variable types
+                variable elements
 
 		if {[ns_conn isconnected]} {
 		    if {"[ns_conn driver]" eq "nssock"} {
@@ -321,6 +330,20 @@ proc ::<ws>namespace {
 	    <ws>proc ${tclNamespace}::$procTail $arguments $procBody $returns $returnList 
 	    
 	}
+	"schema" {
+	    if {![<ws>namespace set $tclNamespace schemaIsInitialized]} {
+		set tmpTargetNamespace [lindex $args 0]
+		if {"$tmpTargetNamespace" ne  ""} {
+		    <ws>namespace set $tclNamespace targetNamespace $tmpTargetNamespace
+		} 
+		# Create new wsdl schema:
+		namespace eval $tclNamespace {
+		    ::wsdl::schema::new $tclNamespace $targetNamespace
+		    set schemaIsInitialized 1
+		}
+	    }
+
+	}
 	"delete" {
 	    # Use to remove this namespace and all associated wsdb components
 	    # usually call by init, although could use in ns_atclose.
@@ -343,25 +366,21 @@ proc ::<ws>proc {
 
     # Determine or Create Schema/Namespace
     set tclNamespace [namespace qualifiers $procName] 
-
+    set xmlPrefix [namespace tail $tclNamespace]
     if {[<ws>namespace isFrozen $tclNamespace]} {
 	return 1
     }
-
-    set targetNamespace [string trimright "urn:tcl[string map {:: :} $tclNamespace]" ":"]
-    set xmlPrefix [namespace tail $tclNamespace]
-
-    # Create new wsdl schema:
-    ::wsdl::schema::new $xmlPrefix $targetNamespace
+    <ws>namespace schema $tclNamespace
 
     set args [list]
     set inputTypeList [list]
     set inputConversionList [list]
+    set outputConversionList [list]
 
-    ::tws::log::log Debug "<ws>proc procArgsList = '$procArgsList'"
+    <ws>log Debug "<ws>proc procArgsList = '$procArgsList'"
 
     foreach argList $procArgsList {
-	::tws::log::log Debug "<ws>proc argList = '$argList'"
+	<ws>log Debug "<ws>proc argList = '$argList'"
         set argNameType [lindex $argList 0]
 	if {[set first [string first ":" $argNameType]] > -1} {
 	    set argName [string range $argNameType 0 [expr $first -1 ]]
@@ -376,21 +395,22 @@ proc ::<ws>proc {
             set argType "xsd::string"
 	}
 	
-	# Create simpleType in the targetNamespace
-	::wsdl::types::simpleType::new $xmlPrefix $argName $argType
+	# Create simpleType in the targetNamespace, unless it exists
+	if {![<ws>type exists ${xmlPrefix}:$argName]} {
+	    <ws>type simple ${xmlPrefix}:$argName $argType
+	}
 	
 	# The new type will be used to create the doc child elements:
 	set elementType ${xmlPrefix}::$argName
 
-
+	# Handle default value
 	if {[llength $argList] == 2} {
-            # A default value is provided
 	    set argDefault [lindex $argList 1]
 	    lappend args [list $argName $argDefault]
-            lappend inputTypeList [list $argName $elementType 0]
+            lappend inputTypeList [list $argName $elementType {minOccurs 0}]
 	} else {
 	    lappend args [list $argName]
-            lappend inputTypeList [list $argName $elementType 1]
+            lappend inputTypeList [list $argName $elementType ]
 	}
 	lappend inputConversionList $argName "Value"
 
@@ -403,7 +423,10 @@ proc ::<ws>proc {
     if {"$returns" eq "" || "$returnList" eq ""} {
 	# Creating simpleTypes in targetNamespace:
 	# This is the default if no returnList is given:
-	::wsdl::types::simpleType::new $xmlPrefix ResultString "xsd::string"
+	if {![<ws>type exists ${xmlPrefix}:ResultString]} {
+	    <ws>type simple ${xmlPrefix}:ResultString "xsd::string"
+	}
+	#::wsdl::types::simpleType::new $xmlPrefix ResultString "xsd::string"
 	lappend returnTypeList [list ResultString ${xmlPrefix}::ResultString 1]
     } else {
 	foreach returnArg $returnList {
@@ -421,10 +444,15 @@ proc ::<ws>proc {
 
 	    }
 	    # Creating simpleTypes in targetNamespace:
-	    ::wsdl::types::simpleType::new $xmlPrefix $returnArgName $returnArgType
+	    if {![<ws>type exists ${xmlPrefix}:$returnArgName]} {
+		<ws>type simple ${xmlPrefix}:$returnArgName $returnArgType
+	    }
+
+	    #::wsdl::types::simpleType::new $xmlPrefix $returnArgName $returnArgType
 	    # New type used for doc child elements:
 	    set elementType ${xmlPrefix}::$returnArgName
-	    lappend returnTypeList [list $returnArgName $elementType 1]
+	    lappend returnTypeList [list $returnArgName $elementType ]
+	    lappend outputConversionList $returnArgName "Value"
 	} 
     }
 
@@ -438,10 +466,12 @@ proc ::<ws>proc {
     # XML Schema Element Types (complexType):
     # Create input/output element as type to be used for message:
     set inputElementName ${baseName}Request
-    eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $inputElementName $inputTypeList $inputConversionList] 
+    <ws>element sequence ${xmlPrefix}:$inputElementName $inputTypeList $inputConversionList  
+    #eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $inputElementName $inputTypeList $inputConversionList] 
 
     set outputElementName ${baseName}Response
-    eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $outputElementName $returnTypeList]
+    <ws>element sequence ${xmlPrefix}:$outputElementName $returnTypeList $outputConversionList
+    #eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $outputElementName $returnTypeList]
    
     # WSDL Messages
     set inputMessageName ${inputElementName}Msg
@@ -475,27 +505,23 @@ proc ::<ws>type {
     if {![<ws>namespace exists $tclNamespace]} {
 	<ws>namespace init $tclNamespace
     }
-    
+    # Maybe init schema
+    <ws>namespace schema $tclNamespace
+
     switch -exact -- $subcmd {
 	"exists" {
 	    return [info exists ${tclNamespace}::types($name)]
 	}
     }
-
     switch -glob -- $subcmd {
 
 	"sim*" {
-
-	    if {"[set base [lindex $args 0]" eq ""} {
+	    if {"[set base [lindex $args 0]]" eq ""} {
 		set base "xsd::string"
 	    }
-
 	    ::wsdl::types::simpleType::new $tnsAlias $name $base
-
 	    set ${tclNamespace}::types($name) [list base $base]
-
 	}
-
 	"enum*" {
 	    # <ws>type enum namespace::name enum {base xsd::string}
 
@@ -507,13 +533,10 @@ proc ::<ws>type {
 	    
 	    ::wsdl::types::simpleType::restrictByEnumeration $tnsAlias \
 		$name $base $enum
-
 	    set ${tclNamespace}::types($name) [list base $base enum $enum]
 
 	}
-	
 	"pat*" {
-
 	    set pattern  [lindex $args 0]
 	    set base     [lindex $args 1]
 	    if {"$base" eq ""} {
@@ -521,32 +544,118 @@ proc ::<ws>type {
 	    }
 	    ::wsdl::types::simpleType::restrictByPattern $tnsAlias \
 		$name $base $pattern
-
 	    set ${tclNamespace}::types($name) [list base $base pattern $pattern]
-
 	}
-
 	"q*" {
-
 	    if {[<ws>type exists $typeName]} {
 		return [set ${tclNamespace}::types($name)]
 	    } else {
 		return {}
 	    }
 	}
-
 	"valid*" {
 
 	}
-
 	default {
 
 	}
-
     }
-
+    # End subcmd switch
 }
 
-ns_log Notice ">>>>>>>>>>>>>>>>>>>>>>LOADED WS PROCS<<<<<<<<<<<<<<<<<<<"
+proc ::<ws>element {
+    subcmd
+    typeName
+    args
+} {
+    # Convenience hackery:
+    set typeParts [split [string trim $typeName :] :]
+    set tnsAlias [lindex $typeParts 0]
+    set tclNamespace ::$tnsAlias
+    set name [lindex $typeParts end]
 
-ns_log Notice "<ws>type exists datetime::x = [<ws>type exists datetime::x]"
+    if {![<ws>namespace exists $tclNamespace]} {
+	<ws>namespace init $tclNamespace
+    }
+
+    # Maybe init schema
+    <ws>namespace schema $tclNamespace
+    
+    switch -exact -- $subcmd {
+	"exists" {
+	    return [info exists ${tclNamespace}::elements($name)]
+	}
+    }
+
+    #Child Element Spec (list of):
+    #{Name typeName attributeList}
+
+    switch -glob -- $subcmd {
+
+	"seq*" {
+	    set ElementList [list]
+	    set InputConversionList [lindex $args 1]
+	    foreach ElementSpec [lindex $args 0] {
+		set Element [lindex $ElementSpec 0]
+		set typeName [lindex $ElementSpec 1]
+		set attrList [lindex $ElementSpec 2]
+		<ws>log Debug "element sequence Element = $Element attrList = '$attrList'"
+		if {[llength $attrList]} {
+		    if {[array exists attrArray]} {
+			array unset attrArray
+		    }
+		    array set attrArray $attrList
+		    if {![info exists attrArray(minOccurs)]} {
+			set minOccurs 1
+		    } else {
+			set minOccurs $attrArray(minOccurs)
+			unset attrArray(minOccurs)
+		    }
+		    if {![info exists attrArray(maxOccurs)]} {
+			set maxOccurs 1
+		    } else {
+			set maxOccurs $attrArray(maxOccurs)
+			unset attrArray(maxOccurs)
+		    }
+		    
+		    lappend ElementList [list $Element $typeName \
+					     $minOccurs $maxOccurs \
+					     [array get attrArray]]
+		} else {
+		    lappend ElementList [list $Element $typeName]
+		}
+		
+	    }
+	    if {![<ws>element exists ${tnsAlias}::$name]} {
+		<ws>log Notice "<ws>element making ${tnsAlias}::$name"
+		eval [::wsdl::elements::modelGroup::sequence::new \
+			  $tnsAlias $name $ElementList $InputConversionList]
+		set ${tclNamespace}::elements($name) [list $ElementList $InputConversionList]
+	    }
+
+	}
+	"global*" {
+
+
+	}
+	"multi*" {
+
+
+	}
+	"append" {
+
+
+	}
+	"q*" {
+
+
+	}
+	"valid*" {
+
+
+	}
+	default {
+
+	}
+    }
+}
