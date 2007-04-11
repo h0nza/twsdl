@@ -17,6 +17,13 @@ namespace eval ::wsdl::server {
     
     # 1. Look for nssock modules:
     set modules [ns_configsection "ns/modules"]
+    
+    # 1.1 If ns/modules doesn't exist, probably running AOLserver
+    #     without virtual servers.
+    if {"$modules" eq ""} {
+	log Error "wsdl-server-init: twsdl requires virtual servers"
+	return -code ok -errorinfo 
+    }
     set modulesSetSize [ns_set size $modules]
     for {set i 0} {$i < $modulesSetSize} {incr i} {
 	if {[string match "*nssock*" "[ns_set value $modules $i]"]} {

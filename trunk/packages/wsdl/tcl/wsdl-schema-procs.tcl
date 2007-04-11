@@ -34,6 +34,8 @@ proc ::wsdl::schema::new { schemaAlias targetNamespace} {
 	initDatabase
     }
 
+    set schemaAlias [string trim $schemaAlias :]
+
     if {[::wsdb::schema::aliasExists $schemaAlias]} {
 	if {[::wsdb::schema::getTargetNamespace $schemaAlias] ne "$targetNamespace"} {
 	    log Error "wsdl::schema::new attempt to use $schemaAlias for new targetNamespace '$targetNamespace'"
@@ -60,7 +62,7 @@ proc ::wsdl::schema::appendSimpleType {
     {base xsd::string}
     {data ""}
 } {
-    #lappend ::wsdb::schema::${schemaAlias}::schemaItems $name
+
     ::wsdb::schema::addSchemaItem $schemaAlias $name
     set typeNS ::wsdb::schema::${schemaAlias}::${name}
 
@@ -85,7 +87,6 @@ proc ::wsdl::schema::addElement {
     {base xsd::string} 
 } {
 
-    #lappend ::wsdb::schema::${schemaAlias}::schemaItems $name
     ::wsdb::schema::addSchemaItem $schemaAlias $name
 
     set typeNS ::wsdb::schema::${schemaAlias}::${name}
@@ -131,7 +132,7 @@ proc ::wsdl::schema::addSequence {
 		::wsdl::schema::addElement $schemaAlias $elementName $base
 		set base ${schemaAlias}::$elementName
 	    } else {
-		ns_log Notice "schemaItems: '[set ::wsdb::schema::${schemaAlias}::schemaItems]' elem = '$elementName'"
+		log Notice "schemaItems: '[set ::wsdb::schema::${schemaAlias}::schemaItems]' elem = '$elementName'"
 	    }
 	}
 	set ${elementNS}::base [namespace tail $base]
@@ -152,7 +153,7 @@ proc ::wsdl::schema::addSequence {
         }
     }
 
-    #lappend ::wsdb::schema::${schemaAlias}::schemaItems $name 
     ::wsdb::schema::addSchemaItem $schemaAlias $name
 
+    return $typeNS
 }
