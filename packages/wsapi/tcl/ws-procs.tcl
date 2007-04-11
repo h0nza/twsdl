@@ -53,7 +53,6 @@ proc ::<ws>return {tclNamespace} {
 		    set messages [set ::wsdb::operations::${xmlPrefix}::${operation}::messages]
 		    set inputMessageType [::wsdl::operations::getInputMessageType $xmlPrefix $operation]
 		    set inputMessageConv [set ::wsdb::operations::${xmlPrefix}::${operation}::conversionList]
-		    #set inputMessageConv [set ::wsdb::elements::${xmlPrefix}::${inputMessageType}::conversionList]
 		    set inputMessageSignature [list]
                     set inputFormElements ""
 		    set missing 0
@@ -338,7 +337,7 @@ proc ::<ws>namespace {
 		} 
 		# Create new wsdl schema:
 		namespace eval $tclNamespace {
-		    ::wsdl::schema::new $tclNamespace $targetNamespace
+		    ::wsdl::schema::new $xmlPrefix $targetNamespace
 		    set schemaIsInitialized 1
 		}
 	    }
@@ -426,7 +425,6 @@ proc ::<ws>proc {
 	if {![<ws>type exists ${xmlPrefix}:ResultString]} {
 	    <ws>type simple ${xmlPrefix}:ResultString "xsd::string"
 	}
-	#::wsdl::types::simpleType::new $xmlPrefix ResultString "xsd::string"
 	lappend returnTypeList [list ResultString ${xmlPrefix}::ResultString 1]
     } else {
 	foreach returnArg $returnList {
@@ -448,7 +446,6 @@ proc ::<ws>proc {
 		<ws>type simple ${xmlPrefix}:$returnArgName $returnArgType
 	    }
 
-	    #::wsdl::types::simpleType::new $xmlPrefix $returnArgName $returnArgType
 	    # New type used for doc child elements:
 	    set elementType ${xmlPrefix}::$returnArgName
 	    lappend returnTypeList [list $returnArgName $elementType ]
@@ -467,11 +464,9 @@ proc ::<ws>proc {
     # Create input/output element as type to be used for message:
     set inputElementName ${baseName}Request
     <ws>element sequence ${xmlPrefix}:$inputElementName $inputTypeList $inputConversionList  
-    #eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $inputElementName $inputTypeList $inputConversionList] 
 
     set outputElementName ${baseName}Response
     <ws>element sequence ${xmlPrefix}:$outputElementName $returnTypeList $outputConversionList
-    #eval [::wsdl::elements::modelGroup::sequence::new $xmlPrefix $outputElementName $returnTypeList]
    
     # WSDL Messages
     set inputMessageName ${inputElementName}Msg
@@ -599,7 +594,7 @@ proc ::<ws>element {
 		set Element [lindex $ElementSpec 0]
 		set typeName [lindex $ElementSpec 1]
 		set attrList [lindex $ElementSpec 2]
-		<ws>log Debug "element sequence Element = $Element attrList = '$attrList'"
+
 		if {[llength $attrList]} {
 		    if {[array exists attrArray]} {
 			array unset attrArray
