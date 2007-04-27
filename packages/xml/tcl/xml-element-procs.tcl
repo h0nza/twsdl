@@ -21,6 +21,7 @@ proc ::xml::element::toPrefixLocalnameList { element } {
 }
 
 # Create xml element shell with full namespace path
+# Note that this API will be called by ::xml::element::append
 proc ::xml::element::create {
     tclNamespace
     childLocalname
@@ -45,13 +46,21 @@ proc ::xml::element::create {
     return $tclNamespace
 }
 
+# ::xml::element::append
+# If tclNamespace is not an initialized XML Element,
+# This procedure will call ::xml::element::append
 proc ::xml::element::append { 
     tclNamespace 
     childLocalname
     {prefix {}}
     {attributeList {}}
 } {
-   
+    if {![info exists ${tclNamespace}::.NAME]} {
+        log Debug ".......Short circuit of append with $tclNamespace and $childLocalname"
+	return [::xml::element::create ${tclNamespace}::$childLocalname $childLocalname $prefix $attributeList]
+    } else {
+	log Debug ".......Parent exists $tclNamespace .NAME = '[set ${tclNamespace}::.NAME]' creating child $childLocalname"
+    }
     if {![info exists ${tclNamespace}::.COUNT($childLocalname)]} {
 	set ${tclNamespace}::.COUNT($childLocalname) 1
 	set childLocalNamespace ${childLocalname}

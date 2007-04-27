@@ -146,6 +146,9 @@ proc ::wsdl::definitions::new {
 	    set schemaItemBase [set ::wsdb::schema::${tnsAlias}::${schemaItem}::base]
 	    
 	    set baseAlias [set ::wsdb::schema::${tnsAlias}::${schemaItem}::baseAlias]
+	    if {[string match "elements::*" "$baseAlias"]} {
+		set baseAlias [namespace tail $baseAlias]
+	    }
 	    # IS this useful?
 	    set baseTargetNamespace [::wsdb::schema::getTargetNamespace $baseAlias]
 	    if {"$baseTargetNamespace" eq "http://www.w3.org/2001/XMLSchema"} {
@@ -153,7 +156,10 @@ proc ::wsdl::definitions::new {
 	    } else {
 		set xmlSchemaType 0
 	    }
+	} else {
+	    set baseTargetNamespace $targetNamespace
 	}
+	
 	# At some point, we may import schema items (so that we can keep them in separate
         # namespaces) For now we need to derive them all from xsd. So baseAlias should
         # either be xsd or the alias for the service schema types. 
@@ -207,7 +213,9 @@ proc ::wsdl::definitions::new {
 		    set childItemBase [set ::wsdb::schema::${tnsAlias}::${schemaItem}::${childItem}::base]
 		    set childItemAlias [set ::wsdb::schema::${tnsAlias}::${schemaItem}::${childItem}::baseAlias]
 		    set childAttributes [array get ::wsdb::schema::${tnsAlias}::${schemaItem}::${childItem}::.ATTR]
-
+		    if {[string match "elements::*" "$childItemAlias"]} {
+			set childItemAlias [namespace tail $childItemAlias]
+		    }
 		    # if type is in targetNamespace, change the alias to 'tns'
 		    if {"$childItemAlias" eq "$tnsAlias"} {
 			set childItemType "tns:${childItemBase}"

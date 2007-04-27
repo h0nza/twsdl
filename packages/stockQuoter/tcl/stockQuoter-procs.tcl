@@ -40,23 +40,24 @@ set sqns "stockquoter"
 ::wsdl::types::simpleType::restrictByEnumeration $sqns faultCode xsd::integer {404 500 301}
 # Note that the command returns a script. eval executes it.
 eval [::wsdl::elements::modelGroup::sequence::new $sqns StockRequest {
-  {Symbol  stockquoter::symbol}
-  {Verbose stockquoter::verbose 0}}]
+    {Symbol:stockquoter::symbol}
+    {Verbose:stockquoter::verbose {minOccurs 0 default "1"}}
+}]
 	  
 
 
 eval [::wsdl::elements::modelGroup::sequence::new $sqns StockQuote {
-  {Symbol       stockquoter::symbol          }
-  {Quote        stockquoter::quote           }
-  {DateOfChange stockquoter::dateOfChange 0  }
-  {Name         stockquoter::name         0  1 {nillable no}}
-  {Trend        stockquoter::trend        0  }
-  {DailyMove    stockquoter::dailyMove    0  }
-  {LastMove     stockquoter::lastMove     0  }
+    {Symbol:stockquoter::symbol          }
+    {Quote:stockquoter::quote           }
+    {DateOfChange:stockquoter::dateOfChange {minOccurs 0}  }
+    {Name:stockquoter::name         {minOccurs 0 nillable no}}
+    {Trend:stockquoter::trend        {minOccurs 0}}
+    {DailyMove:stockquoter::dailyMove    {minOccurs 0}  }
+    {LastMove:stockquoter::lastMove     {minOccurs 0}  }
 }]
 
 eval [::wsdl::elements::modelGroup::sequence::new $sqns StockQuoteFault {
-    {FaultCode stockquoter::faultCode        }
+    {FaultCode:stockquoter::faultCode        }
 }]
 
 

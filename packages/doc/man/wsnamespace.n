@@ -6,7 +6,7 @@
 '\" Contact: Tom Jackson <tom at junom.com>
 .so man.macros
 
-.TH <ws>namespace n 0.5 TWiST "TWiST: Tcl Web Services Toolkit"
+.TH <ws>namespace n 0.9 TWiST "TWiST: Tcl Web Services Toolkit"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -18,6 +18,8 @@ TWiST is a front-end toolkit for rapidly deploy Tcl procedures as a web service.
 .SH SYNTAX
 .PP
 \fB<ws>namespace init \fItclNamespace \fR
+.PP
+\fB<ws>namespace schema \fItclNamespace targetNamespace\fR
 .PP
 \fB<ws>namespace import \fItclNamespace fullyQualifiedProcName \fR ?returns? ?typedReturnList?
 .PP
@@ -46,6 +48,10 @@ Once a web service is defined in a Tcl page via the TWiST API, visiting the page
 .RS
 Creates the Tcl namespace and sets up a few namespace variables.
 .RE
+\fB<ws>namespace schema\fR
+.RS
+Initializes the XML-Schema Namespace so types can be defined prior to use by \fB<ws>proc\fR and \fB<ws>namespace import\fR. The targetNamespace is also changed to the provided value. Developers should use this command any time either \fB<ws>type\fR or \fB<ws>element\fR are called prior to calling \fB<ws>proc\fR or \fB<ws>namespace import\fR.
+.RE
 .PP
 \fB<ws>namespace import\fR
 .RS
@@ -59,7 +65,7 @@ Once all procedures have been added to the web service, finalize handles the gro
 .PP
 \fB<ws>namespace freeze\fR
 .RS
-Blocks any further modifications to the web service. 
+Blocks any further modifications to the web service. Use the freeze command after development is complete. The command prevents execution of the defining scripts. However, developers may need to restart AOLserver if types or proc signatures change. Also note that threads will exit within a few minutes, providing the same effect as restarting.
 .RE
 .PP
 \fB<ws>namespace unfreeze\fR

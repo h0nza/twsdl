@@ -14,8 +14,8 @@ namespace eval ::someothernamespace {
 
 <ws>proc ::mywebservice::testit {
     {a:xsd::string}
-    {b "ooo"}
-    {c:string "xxx"}
+    {b {default "ooo" minOccurs 0}}
+    {c:string {default "xxx" minOccurs 0}}
 } {
     return [list $a $b $c]
 
@@ -52,15 +52,15 @@ namespace eval ::someothernamespace {
 } returns { Output }
 
 <ws>proc ::mywebservice::AddNumbers {
-    {FirstNum:integer 0}
-    {SecondNum:integer 0}
+    {FirstNum:integer {default "0" minOccurs 0}}
+    {SecondNum:integer {default "0" minOccurs 0}}
 } {
     return [expr $FirstNum + $SecondNum]
 } returns {Sum:xsd::integer}
 
 <ws>proc ::mywebservice::MultiplyNumbers {
-    {FirstDecimal:decimal 0}
-    {SecondDecimal:decimal 0}
+    {FirstDecimal:decimal {default "0.0" minOccurs 0}}
+    {SecondDecimal:decimal {default "0.0" minOccurs 0}}
 } {
     return [expr $FirstDecimal * $SecondDecimal]
 } returns {Product:decimal}
@@ -73,6 +73,8 @@ namespace eval ::someothernamespace {
 # The developer can add a return type as in <ws>proc.
 # Probably should allow optional typing, but not naming of input args,
 # although it might be possible to replace arg names, but dangerous.
+
+
 <ws>namespace import ::mywebservice ::someothernamespace::hello returns {Yeah}
 <ws>namespace import ::mywebservice ::someothernamespace::helloWorld returns { Say }
 # Code above could be moved to library 
@@ -85,6 +87,9 @@ namespace eval ::someothernamespace {
 
 # Freeze code to prevent changes and speed execution:
 <ws>namespace freeze ::mywebservice
+
+# Test procs with one return value
+<ws>log Debug "...."
 
 # Returns the correct response:
 <ws>return ::mywebservice
