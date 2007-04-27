@@ -556,41 +556,7 @@ proc ::<ws>element {
     switch -glob -- $subcmd {
 
 	"seq*" {
-	    if {0} {
-	    set ElementList [list]
-	    set InputConversionList [lindex $args 1]
-	    foreach ElementSpec [lindex $args 0] {
-		set Element [lindex $ElementSpec 0]
-		set typeName [lindex $ElementSpec 1]
-		set attrList [lindex $ElementSpec 2]
 
-		if {[llength $attrList]} {
-		    if {[array exists attrArray]} {
-			array unset attrArray
-		    }
-		    array set attrArray $attrList
-		    if {![info exists attrArray(minOccurs)]} {
-			set minOccurs 1
-		    } else {
-			set minOccurs $attrArray(minOccurs)
-			unset attrArray(minOccurs)
-		    }
-		    if {![info exists attrArray(maxOccurs)]} {
-			set maxOccurs 1
-		    } else {
-			set maxOccurs $attrArray(maxOccurs)
-			unset attrArray(maxOccurs)
-		    }
-		    
-		    lappend ElementList [list $Element $typeName \
-					     $minOccurs $maxOccurs \
-					     [array get attrArray]]
-		} else {
-		    lappend ElementList [list $Element $typeName]
-		}
-		
-	    }
-	    }
 	    if {![<ws>element exists ${tnsAlias}::$name]} {
 		<ws>log Notice "<ws>element making ${tnsAlias}::$name"
 		eval [::wsdl::elements::modelGroup::sequence::new \
