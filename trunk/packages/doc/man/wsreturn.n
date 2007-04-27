@@ -6,7 +6,7 @@
 '\" Contact: Tom Jackson <tom at junom.com>
 .so man.macros
 
-.TH <ws>return n 0.5 TWiST "TWiST: Tcl Web Services Toolkit"
+.TH <ws>return n 0.9 TWiST "TWiST: Tcl Web Services Toolkit"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME

@@ -118,8 +118,16 @@ proc ::wsdl::schema::addSequence {
 	variable childList [list]
     }
 
-    foreach elementData $elementList {
-	foreach {elementName base minOccurs maxOccurs facetList} $elementData { }
+    foreach element $elementList {
+	if {[array exists elementData]} {
+	    array unset elementData
+	}
+	set elementName [::wsdl::elements::modelGroup::sequence::getElementData $element elementData]
+	set base $elementData(type)
+	set minOccurs $elementData(minOccurs)
+	set maxOccurs $elementData(maxOccurs)
+	set facetList $elementData(facets)
+	
 	lappend ${typeNS}::childList $elementName
 	set elementNS ${typeNS}::$elementName
 

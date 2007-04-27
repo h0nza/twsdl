@@ -321,12 +321,12 @@ proc ::<ws>namespace {
 	    set arguments [list]
 	    foreach procArg $procArgs {
 		if {[info default $procName $procArg defaultValue]} {
-		    lappend arguments [list $procArg $defaultValue]
+		    lappend arguments [list $procArg [list default [list $defaultValue] minOccurs 0]]
 		} else {
 		    lappend arguments [list $procArg]
 		}
 	    }
-	    <ws>proc ${tclNamespace}::$procTail $arguments $procBody $returns $returnList 
+	    <ws>proc ${tclNamespace}::$procTail $arguments $procBody $returns $returnList
 	    
 	}
 	"schema" {
@@ -380,77 +380,42 @@ proc ::<ws>proc {
 
     foreach argList $procArgsList {
 	<ws>log Debug "<ws>proc argList = '$argList'"
-        set argNameType [lindex $argList 0]
-	if {[set first [string first ":" $argNameType]] > -1} {
-	    set argName [string range $argNameType 0 [expr $first -1 ]]
-	    set argType [string range $argNameType [expr $first + 1] end]
-            if {"$argType" eq ""} {
-		set argType "xsd::string"
-	    } elseif {[string first ":" "$argType"] == -1} {
-		set argType "xsd::$argType"
-	    } 
-	} else {
-	    set argName $argNameType
-            set argType "xsd::string"
-	}
-	
-	# Create simpleType in the targetNamespace, unless it exists
-	if {![<ws>type exists ${xmlPrefix}:$argName]} {
-	    <ws>type simple ${xmlPrefix}:$argName $argType
-	}
-	
-	# The new type will be used to create the doc child elements:
-	set elementType ${xmlPrefix}::$argName
 
-	# Handle default value
-	if {[llength $argList] == 2} {
-	    set argDefault [lindex $argList 1]
-	    lappend args [list $argName $argDefault]
-            lappend inputTypeList [list $argName $elementType {minOccurs 0}]
+	if {[array exists elementData]} {
+	    array unset elementData
+	}
+
+	set argName [::wsdl::elements::modelGroup::sequence::getElementData\
+			 $argList elementData];
+
+	lappend inputConversionList $argName Value
+
+	if {[info exists elementData(default)]} {
+	    lappend args [list $argName $elementData(default)]
 	} else {
 	    lappend args [list $argName]
-            lappend inputTypeList [list $argName $elementType ]
 	}
-	lappend inputConversionList $argName "Value"
 
     }
-
-
+    
 
     # Handle return type 
     set returnTypeList [list]
     if {"$returns" eq "" || "$returnList" eq ""} {
-	# Creating simpleTypes in targetNamespace:
-	# This is the default if no returnList is given:
-	if {![<ws>type exists ${xmlPrefix}:ResultString]} {
-	    <ws>type simple ${xmlPrefix}:ResultString "xsd::string"
-	}
-	lappend returnTypeList [list ResultString ${xmlPrefix}::ResultString 1]
+	lappend returnList [list ResultString]
+	lappend outputConversionList [list ResultString Value]
     } else {
+
 	foreach returnArg $returnList {
-	    if {[set first [string first ":" $returnArg]] > -1} {
-		set returnArgName [string range $returnArg 0 [expr $first -1 ]]
-		set returnArgType [string range $returnArg [expr $first + 1] end]
-		if {"$returnArgType" eq ""} {
-		    set returnArgType "xsd::string"
-		} elseif {[string first ":" "$returnArgType"] == -1} {
-		    set returnArgType "xsd::$returnArgType"
-		}
-	    } else {
-		set returnArgName $returnArg
-		set returnArgType "xsd::string"
 
-	    }
-	    # Creating simpleTypes in targetNamespace:
-	    if {![<ws>type exists ${xmlPrefix}:$returnArgName]} {
-		<ws>type simple ${xmlPrefix}:$returnArgName $returnArgType
+	    if {[array exists returnData]} {
+		array unset returnData
 	    }
 
-	    # New type used for doc child elements:
-	    set elementType ${xmlPrefix}::$returnArgName
-	    lappend returnTypeList [list $returnArgName $elementType ]
-	    lappend outputConversionList $returnArgName "Value"
-	} 
+	    lappend outputConversionList \
+		[::wsdl::elements::modelGroup::sequence::getElementData\
+		     $returnArg returnData] Value;
+	}
     }
 
 
@@ -463,10 +428,12 @@ proc ::<ws>proc {
     # XML Schema Element Types (complexType):
     # Create input/output element as type to be used for message:
     set inputElementName ${baseName}Request
-    <ws>element sequence ${xmlPrefix}:$inputElementName $inputTypeList $inputConversionList  
+    <ws>element sequence ${xmlPrefix}:$inputElementName\
+	$procArgsList $inputConversionList;
 
     set outputElementName ${baseName}Response
-    <ws>element sequence ${xmlPrefix}:$outputElementName $returnTypeList $outputConversionList
+    <ws>element sequence ${xmlPrefix}:$outputElementName\
+	$returnList $outputConversionList;
    
     # WSDL Messages
     set inputMessageName ${inputElementName}Msg
@@ -477,8 +444,9 @@ proc ::<ws>proc {
 
     # WSDL Operation
     set operationName ${baseName}Operation
-    eval [::wsdl::operations::new $xmlPrefix $operationName [list $procName $inputConversionList] \
-			   [list input $inputMessageName] [list output $outputMessageName]]
+    eval [::wsdl::operations::new $xmlPrefix $operationName \
+	      [list $procName $inputConversionList] \
+	      [list input $inputMessageName] [list output $outputMessageName]];
     
     <ws>namespace lappend $tclNamespace operations $operationName
 
@@ -588,6 +556,7 @@ proc ::<ws>element {
     switch -glob -- $subcmd {
 
 	"seq*" {
+	    if {0} {
 	    set ElementList [list]
 	    set InputConversionList [lindex $args 1]
 	    foreach ElementSpec [lindex $args 0] {
@@ -621,11 +590,12 @@ proc ::<ws>element {
 		}
 		
 	    }
+	    }
 	    if {![<ws>element exists ${tnsAlias}::$name]} {
 		<ws>log Notice "<ws>element making ${tnsAlias}::$name"
 		eval [::wsdl::elements::modelGroup::sequence::new \
-			  $tnsAlias $name $ElementList $InputConversionList]
-		set ${tclNamespace}::elements($name) [list $ElementList $InputConversionList]
+			  $tnsAlias $name [lindex $args 0] ]
+		set ${tclNamespace}::elements($name) $args
 	    }
 
 	}

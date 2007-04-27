@@ -15,4 +15,7 @@ all:
 	$(INSTMAN) -h wsproc.n ../www
 	$(INSTMAN) wsreturn.n ../www
 	$(INSTMAN) -h wsreturn.n ../www
-
+	$(INSTMAN) wstype.n ../www
+	$(INSTMAN) -h wstype.n ../www
+	$(INSTMAN) wselement.n ../www
+	$(INSTMAN) -h wselement.n ../www

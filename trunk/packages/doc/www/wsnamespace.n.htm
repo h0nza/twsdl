@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.18.1 -->
-<!-- CreationDate: Sun Feb 11 20:59:30 2007 -->
+<!-- CreationDate: Fri Apr 27 14:10:08 2007 -->
 <html>
 <head>
 <meta name="generator" content="groff -Thtml, see www.gnu.org">
@@ -28,7 +28,7 @@
 <tr valign="top" align="left">
 <td width="10%"></td>
 <td width="89%">
-<p>wsnamespace &minus; commands</p>
+<p>&lt;ws&gt;namespace &minus; commands</p>
 </td>
 </table>
 <a name="SYNOPSIS"></a>
@@ -59,6 +59,9 @@ and maintain the web service.</p>
 <td width="10%"></td>
 <td width="89%">
 <p><b>&lt;ws&gt;namespace init</b> <i>tclNamespace</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace schema</b> <i>tclNamespace
+targetNamespace</i></p>
 <!-- INDENTATION -->
 <p><b>&lt;ws&gt;namespace import</b> <i>tclNamespace
 fullyQualifiedProcName</i> ?returns? ?typedReturnList?</p>
@@ -141,6 +144,29 @@ variables.</p></td>
 <tr valign="top" align="left">
 <td width="10%"></td>
 <td width="89%">
+<p><b>&lt;ws&gt;namespace schema</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Initializes the XML-Schema Namespace so types can be
+defined prior to use by <b>&lt;ws&gt;proc</b> and
+<b>&lt;ws&gt;namespace import</b>. The targetNamespace is
+also changed to the provided value. Developers should use
+this command any time either <b>&lt;ws&gt;type</b> or
+<b>&lt;ws&gt;element</b> are called prior to calling
+<b>&lt;ws&gt;proc</b> or <b>&lt;ws&gt;namespace
+import</b>.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
 <p><b>&lt;ws&gt;namespace import</b></p></td>
 </table>
 <!-- INDENTATION -->
@@ -184,8 +210,13 @@ into a web service.</p></td>
 <tr valign="top" align="left">
 <td width="20%"></td>
 <td width="79%">
-<p>Blocks any further modifications to the web
-service.</p></td>
+<p>Blocks any further modifications to the web service. Use
+the freeze command after development is complete. The
+command prevents execution of the defining scripts. However,
+developers may need to restart AOLserver if types or proc
+signatures change. Also note that threads will exit within a
+few minutes, providing the same effect as
+restarting.</p></td>
 </table>
 <!-- INDENTATION -->
 <table width="100%" border=0 rules="none" frame="void"

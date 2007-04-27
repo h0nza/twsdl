@@ -3,14 +3,14 @@ set SOAP {<?xml version="1.0" encoding="utf-8"?>
 <soap:Body>
 <StockRequest xmlns="http://stockquoter.com/stockquoter">
  <Symbol>MSFT</Symbol>
- <Verbose>0</Verbose>
+ <Verbose>1</Verbose>
 </StockRequest>
 </soap:Body>
 </soap:Envelope>}
 
 set length [string length $SOAP]
 
-set fds [ns_sockopen maria 8080]
+set fds [ns_sockopen 192.168.1.102 8005]
 set rid [lindex $fds 0]
 set wid [lindex $fds 1]
 puts $wid "POST /StockQuote HTTP/1.0
@@ -34,7 +34,7 @@ close $wid
 ns_return 200 text/plain "
 Sent:
 POST /StockQuote HTTP/1.0
-Host: maria:8080
+Host: 192.168.1.102:8005
 Content-Type: text/xml; charset=utf-8
 Content-Length: $length
 SOAPAction: \"http://stockquoter.com/StockQuote\"

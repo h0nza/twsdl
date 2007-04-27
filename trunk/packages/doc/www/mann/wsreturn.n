@@ -241,7 +241,7 @@ Database Class:	\\fB\\$3\\fR
 \\$1\l'|0\(ul'\\$2
 ..
 
-.TH <ws>return n 0.5 TWiST "TWiST: Tcl Web Services Toolkit"
+.TH <ws>return n 0.9 TWiST "TWiST: Tcl Web Services Toolkit"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
