@@ -17,7 +17,7 @@ proc ::xml::document::create {
     {attributeList {}}
 } {
 
-    log Notice "Creating XML Document in tclns $tclNamespace with de = $documentElement p = $prefix a = $attributeList"
+    log Debug "Creating XML Document in tclns $tclNamespace with de = $documentElement p = $prefix a = $attributeList"
 
     namespace eval $tclNamespace {
 	variable documentElement
@@ -33,7 +33,7 @@ proc ::xml::document::create {
 
 proc ::xml::document::print { documentNamespace {printer "toXMLNS"} } {
     set documentElement [set ${documentNamespace}::documentElement]
-    log Notice "documentNamespace = $documentNamespace"
+    log Debug "documentNamespace = $documentNamespace"
     return "<?xml version=\"1.0\" encoding=\"utf-8\"?>[::xml::instance::$printer ${documentNamespace}::$documentElement]"
 
 }

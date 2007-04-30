@@ -15,10 +15,12 @@ namespace eval ::inspect {
 proc ::inspect::showNamespace { {namespace "::"} {depth 1} } {
    
     set namespaceList [list]
-    foreach ns [lsort [namespace children "$namespace"]] {
-	lappend namespaceList $depth $ns
-	if {$depth > 0} {
-	    set namespaceList [concat $namespaceList [::inspect::showNamespace "$ns" [expr $depth -1]]]
+    if {[namespace exists $namespace]} {
+	foreach ns [lsort [namespace children "$namespace"]] {
+	    lappend namespaceList $depth $ns
+	    if {$depth > 0} {
+		set namespaceList [concat $namespaceList [::inspect::showNamespace "$ns" [expr $depth -1]]]
+	    }
 	}
     }
     return $namespaceList
@@ -33,7 +35,7 @@ proc ::inspect::findVars { namespace {pattern *}} {
 
 proc ::inspect::findProcs { namespace {pattern *}} {
 
-    return [lsort [namespace eval $namespace "return \[info procs $pattern]"]]
+    return [lsort [namespace eval $namespace "::return \[info procs $pattern]"]]
     
 
 }
@@ -99,8 +101,8 @@ proc ::inspect::displayProcs { {namespace ::} {pattern *} } {
 
     set procs [::inspect::findProcs $namespace $pattern]
     log Notice "Procs = '$procs'"
-    set output "</pre>
-<h4>Procedures in [ns_quotehtml $namespace]</h4>
+    set output "
+<h3>Procedures in [ns_quotehtml $namespace]</h3>
 <pre>"
     foreach procName $procs {
 	append output "\n[::inspect::showProc [string trimright ${namespace} : ]::$procName]\n"
@@ -118,4 +120,72 @@ proc ::inspect::displayNamespace { {namespace ::} {varPattern *} {procPattern *}
     append output "[displayProcs $namespace $procPattern]"
     return "$output"
     
+}
+
+proc ::inspect::displayNamespaceCode { 
+    {namespace ::}
+    {varPattern *}
+    {procPattern *}
+} {
+
+    set output "<pre>\nnamespace eval $namespace \{\n"
+
+    set vars [findVars $namespace $varPattern]
+
+    foreach var $vars {
+	set varOut [namespace tail $var]
+	if {[array exists $var]} {
+	    set arrayNames [array names $var]
+	    append output "\n    <b>variable [ns_quotehtml $varOut]</b>\n"
+	    foreach arrayName $arrayNames {
+		append output "         set <b>[ns_quotehtml ${varOut}\($arrayName\)]</b> [list [ns_quotehtml [set ${var}($arrayName)]]]\n"
+	    }
+	} elseif {[info exists $var]} {
+	    append output "    <b>variable [ns_quotehtml $varOut]</b> [list [ns_quotehtml [set $var]]]\n"
+	} else {
+	    append output "    <b>variable [ns_quotehtml $varOut]</b>\n"
+	}
+    }
+    
+    append output "\n\}\n</pre>"
+
+    return $output
+}
+
+
+proc ::inspect::displayNamespaceChildren {
+    {namespace ::}
+} {
+    set namespaces [::inspect::showNamespace $namespace 0]
+
+    return "<h3>Namespace Children of $namespace</h3>
+<ul>[::inspect::formatList $namespaces [list depth ns] {
+<li><a href="?ns=$ns">$ns</a></li>}]</ul>"
+
+}
+
+
+proc ::inspect::displayWebServiceLinks {
+    wsAlias
+} {
+    set wsLinksData [list]
+    
+    if {[::wsdb::schema::aliasExists $wsAlias]
+	&& [namespace exists ::${wsAlias}]
+    } {
+	lappend wsLinksData config ::${wsAlias}
+	lappend wsLinksData simpleTypes ::wsdb::types::${wsAlias}
+	lappend wsLinksData complexTypes ::wsdb::elements::${wsAlias}
+	lappend wsLinksData messages ::wsdb::messages::${wsAlias}
+	lappend wsLinksData operations ::wsdb::operations::${wsAlias}
+	lappend wsLinksData portTypes ::wsdb::portTypes::${wsAlias}
+	lappend wsLinksData port ::wsdb::ports::[set ::${wsAlias}::portName]
+	lappend wsLinksData binding ::wsdb::bindings::[set ::${wsAlias}::bindingName]
+	lappend wsLinksData service ::wsdb::services::[set ::${wsAlias}::serviceName]
+	lappend wsLinksData server ::wsdb::servers::[set ::${wsAlias}::serverName]
+    }
+
+    return [::inspect::formatList $wsLinksData {type ns}\
+		"<li><a href=\"?ws=$wsAlias&ns=\$ns\">\$type</a></li>\n"]
+
 }

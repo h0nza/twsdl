@@ -14,6 +14,10 @@
 <ws>type simple stock::name
 <ws>type simple stock::dateOfChange xsd::dateTime
 
+# Example use of documentation proc
+
+<ws>doc type ::stock symbol "NYSE Trading Symbol"
+
 
 <ws>element sequence stock::StockResponse {  
     {Symbol:stock::symbol          }
@@ -31,9 +35,14 @@
     {Verbose:stock::verbose {minOccurs 0 default "1"}}
 }
 
+<ws>doc element stock StockRequest {Defines StockRequest type.
+    User supplies NYSE symbol and a verbose flag for additional data.}
+
 <ws>element sequence stock::StocksRequest {
     {StockRequest:elements::stock::StockRequest {maxOccurs 4}}
 }
+
+<ws>doc element stock StocksRequest {Multiple StockRequest in one document.}
 
 if {0} {
     # This Form is equivalent to the short form below
@@ -72,6 +81,7 @@ if {0} {
     } returns { }
 }
 
+<ws>namespace set ::stock showDocument 1
 
 <ws>namespace finalize ::stock
 

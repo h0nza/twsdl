@@ -277,13 +277,13 @@ proc ::wsdl::bindings::soap::createBody {
 } {
     variable soapEnvelopeAttributes
     variable soapEnvelopeNS
-    log Notice "Creating SOAP Body............ "
+    log Debug "Creating SOAP Body............ "
     set soapPrefix $soapEnvelopeNS(prefix)
     set soapEnvelope [::xml::document::create ${tclNamespace} Envelope \
          $soapPrefix $soapEnvelopeAttributes]
 
     set soapBody [::xml::element::append $soapEnvelope Body $soapPrefix]
-    log Notice "Created SOAP Body..........."
+    log Debug "Created SOAP Body..........."
     return $soapBody
     
 }
@@ -294,7 +294,7 @@ proc ::wsdl::bindings::soap::createFault {
 } {
     variable soapEnvelopeNS
 
-    log Notice "Creating SOAP Body with tclNamespace = $tclNamespace"
+    log Debug "Creating SOAP Body with tclNamespace = $tclNamespace"
     set soapBody [::wsdl::bindings::soap::createBody $tclNamespace]
     set soapPrefix $soapEnvelopeNS(prefix)
 

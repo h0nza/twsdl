@@ -34,7 +34,6 @@ proc ::xml::instance::newXMLNS {tclNamespace xmlList {isDoc 0} } {
     foreach child $children {
 	# Text elements from tDOM. 
 	if {[string match #* [lindex $child 0]]} {
-	     log Notice "Adding text node ............"
 	     ::xml::element::appendText $tclNamespace [lindex $child 0] [lindex $child 1]
 	     continue
 	 }
@@ -88,7 +87,6 @@ proc ::xml::instance::new {instanceNS xmlList {isDoc 0} } {
 	    set "${instanceNS}::$PartName" [lindex $child 1]
 	    incr Child_Count($Name)
 	    lappend ${instanceNS}::.PARTS "$PartName"
-	    #log Debug "Now ${instanceNS}::.PARTS = [set ${instanceNS}::.PARTS]"
 	    continue
 	}
 
@@ -190,9 +188,8 @@ proc ::xml::instance::print2 { namespace {depth -1} {mixedParent 0} } {
     append output "$namespace"
     
     foreach .VAR [lsort [info vars ${namespace}::*]] {
-        #puts ".VAR = ${.VAR}"
+
 	if {[array exists ${.VAR}]} {
-            #puts "[array names ${.VAR}]"
 	    foreach .ELEMENT [lsort [array names ${.VAR}]] {
 		append output "\n${indent}${.VAR}(${.ELEMENT}) = '[set ${.VAR}(${.ELEMENT})]'"
 	    }
@@ -217,9 +214,7 @@ proc ::xml::instance::print2 { namespace {depth -1} {mixedParent 0} } {
     }
 
     foreach child [set ${namespace}::.PARTS] {
-	if {[string match ".*" "$child"]} {
-	    #append output "\n${indent}([set ${namespace}::$child]${indent})"
-	} else {
+	if {![string match ".*" "$child"]} {
 	    append output "${indent}([::xml::instance::print2 ${namespace}::$child $depth $mixedElement]${indent})"
 	}
     }
@@ -280,7 +275,7 @@ proc ::xml::instance::toXML { namespace {depth -1} {mixedParent 0} } {
     }
     
     append output "<$elementName"
-    #log Debug "toXML namespace = $namespace output = '$output' "
+
     # NOTE: add code to ensure quoted values
     if {[array exists ${namespace}::.ATTR]} {
 	foreach {attr val} [array get ${namespace}::.ATTR] {
@@ -338,13 +333,11 @@ proc ::xml::instance::toXMLNS { tclNamespace {depth -1} {mixedParent 0} } {
 	&& [set ${tclNamespace}::.PREFIX] ne ""
     } {
 	set prefixElementName [join [list [set ${tclNamespace}::.PREFIX] $elementName] ":"]
-	#log Debug "toXMLNS prefixElementName = $prefixElementName"
     } else {
-	#log Debug "toXMLNS tclNamespace = $tclNamespace"
 	set prefixElementName $elementName
     }
     append output "<$prefixElementName"
-    #log Debug "toXML tclNamespace = $tclNamespace output = '$output' "
+
     # NOTE: add code to ensure quoted values
     if {[array exists ${tclNamespace}::.ATTRS]} {
 	foreach {attr val} [array get ${tclNamespace}::.ATTRS] {
@@ -407,9 +400,7 @@ proc ::xml::instance::printErrors { namespace {depth -1} } {
 	&& [set ${namespace}::.PREFIX] ne ""
     } {
 	set prefixElementName [join [list [set ${namespace}::.PREFIX] $elementName] ":"]
-	#log Debug "toXMLNS prefixElementName = $prefixElementName"
     } else {
-	#log Debug "toXMLNS namespace = $namespace"
 	set prefixElementName $elementName
     }
     append output "$prefixElementName"
@@ -554,7 +545,7 @@ proc ::xml::instance::checkXMLNS {instanceNS namespace} {
     } else {
 	set attribute "xmlns"
     }
-    log Notice "Checking $instanceNS for XMLNS = '$namespace' attr='$attribute'"
+    log Debug "Checking $instanceNS for XMLNS = '$namespace' attr='$attribute'"
     if {"$namespace" eq "[set ${instanceNS}::.ATTRS($attribute)]"} {
 	return 1
     } else {
