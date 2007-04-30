@@ -93,12 +93,12 @@ proc ::wsdl::definitions::new {
     set messageTypeNamesList [list]
 
     foreach portTypeName [concat $portTypeNames] {
-	log Notice "-------- portTypeName = $portTypeName"
+	log Debug "-------- portTypeName = $portTypeName"
 	set portTypeElement [::xml::element::append $wsdlDefElement portType $wsdlNS(prefix) \
 				 [list name $portTypeName]];
 
 	foreach portOperationName [set ::wsdb::portTypes::${tnsAlias}::${portTypeName}::operations] {
-	    log Notice "--------- portOperationName = '$portOperationName'"
+	    log Debug "--------- portOperationName = '$portOperationName'"
 	    set wsdlOperationElement [::xml::element::append $portTypeElement operation $wsdlNS(prefix) \
 					  [list name $portOperationName]];
 	    foreach messageTypeList [set ::wsdb::operations::${tnsAlias}::${portOperationName}::messages] {
@@ -106,9 +106,9 @@ proc ::wsdl::definitions::new {
 		set messageTypeName [lindex $messageTypeList 1]
 		if {[lsearch -exact $messageTypeNamesList $messageTypeName] == -1} {
 		    lappend messageTypeNamesList $messageTypeName
-		    log Notice "..........Adding messagetypename = '$messageTypeName' list = '$messageTypeNamesList'"
+		    log Debug "..........Adding messagetypename = '$messageTypeName' list = '$messageTypeNamesList'"
 		}
-		log Notice "messageType = $messageType  messageTypeName = $messageTypeName"
+		log Debug "messageType = $messageType  messageTypeName = $messageTypeName"
 		::xml::element::append $wsdlOperationElement $messageType  $wsdlNS(prefix) \
 		    [list message "tns:$messageTypeName"];
 
@@ -117,12 +117,12 @@ proc ::wsdl::definitions::new {
     }
     
     # Add Messages:
-    log Notice "...>>> messageTypeNamesList = '$messageTypeNamesList'"
+    log Debug "...>>> messageTypeNamesList = '$messageTypeNamesList'"
     # Keep track of used types (elements)
     set messageTypeElementNames [list]
 
     foreach messageTypeName $messageTypeNamesList {
-	log Notice "..!!!!>>> messageTypeName = '$messageTypeName'"
+	log Debug "..!!!!>>> messageTypeName = '$messageTypeName'"
 	set messageTypeElementName [set ::wsdb::messages::${tnsAlias}::${messageTypeName}::Parts]
 	set wsdlMessageElement [::xml::element::append $wsdlDefElement message $wsdlNS(prefix) \
 				    [list name $messageTypeName]];

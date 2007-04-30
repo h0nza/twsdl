@@ -56,10 +56,7 @@ proc ::xml::element::append {
     {attributeList {}}
 } {
     if {![info exists ${tclNamespace}::.NAME]} {
-        log Debug ".......Short circuit of append with $tclNamespace and $childLocalname"
 	return [::xml::element::create ${tclNamespace}::$childLocalname $childLocalname $prefix $attributeList]
-    } else {
-	log Debug ".......Parent exists $tclNamespace .NAME = '[set ${tclNamespace}::.NAME]' creating child $childLocalname"
     }
     if {![info exists ${tclNamespace}::.COUNT($childLocalname)]} {
 	set ${tclNamespace}::.COUNT($childLocalname) 1

@@ -16,8 +16,8 @@ div {
 }
 
 pre {
-  overflow:auto;
-  width:80%;
+  /*overflow:auto;*/
+  width: 80%;
   font-family: 'Bitstream Vera Sans Mono', 'Andale Mono', 'LucidaTypewriter', monospace;
   background: #e7e6de;
   border: solid 1px #aaa;

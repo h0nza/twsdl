@@ -66,9 +66,9 @@ proc ::<ws>return {tclNamespace} {
 			
 			append inputFormElements "
 <tr>
- <td>${inputMessageType}.$element</td>
- <td><input type=\"text\" name=\"${inputMessageType}.$element\" value=\"[set ${inputMessageType}.$element]\" >
- </td>
+<td>${inputMessageType}.$element</td>
+<td><input type=\"text\" name=\"${inputMessageType}.$element\" value=\"[set ${inputMessageType}.$element]\" >
+</td>
 </tr>"
 		    }
 		    set requestID [::request::new "" "" ""]
@@ -147,12 +147,45 @@ $inputFormElements
 		    foreach operation [set ${tclNamespace}::operations] {
 		        append operationLinks "<li><a href=\"$url?op=$operation&mode=display\">$operation</a></li><br>\n"
 		    }
-		    ns_return 200 text/html "
- The following operations are supported. For a formal definition, please review the <a href=\"$url?WSDL\">Service Description</a>.
+		    set header "
+The following operations are supported. For a formal definition, please review the <a href=\"$url?WSDL\">Service Description</a>.
 <br>
 <ul>
 $operationLinks
 </ul>"
+		    # Provide documentation for this web service
+                    set showDocument [<ws>namespace set $tclNamespace showDocument] 
+
+		    set ns [ns_queryget ns $tclNamespace]
+		    set validDocNamespace 0
+		    foreach {component docNamespace} [set ${tclNamespace}::documentLinks] {
+			if {[string match ${docNamespace}* "$ns"]} {
+			    set validDocNamespace 1
+			    break
+			}
+		    }
+		    if {$showDocument} {
+			set wsAlias [namespace tail $tclNamespace]
+			set wsLinks [::inspect::formatList\
+					 [set ${wsAlias}::documentLinks] {type ns}\
+					 "<li><a href=\"?ws=$wsAlias&ns=\$ns\">\$type</a></li>\n"]
+
+	                ns_return 200 text/html "$header
+<h3>Web Service Links</h3>
+<ul>
+$wsLinks
+</ul>
+[::inspect::displayNamespaceChildren $ns]
+<h3>Namespace Code for $ns</h3>
+[::inspect::displayNamespaceCode $ns ]
+[::inspect::displayProcs $ns]
+
+"
+                        return -code return
+                   } else {
+                        ns_return 200 text/html $header
+                        return -code return
+                   }
 	        }
             }
 	}
@@ -225,7 +258,7 @@ proc ::<ws>namespace {
 		variable portName ${xmlPrefix}Port
 		variable serviceName ${xmlPrefix}Service
 		variable serverName ${xmlPrefix}Server
-		variable forzen 0
+		variable frozen 0
 		variable protocol
 		variable hostHeader
 		variable host
@@ -234,6 +267,8 @@ proc ::<ws>namespace {
 		variable schemaIsInitialized 0
 		variable types
                 variable elements
+		variable documentLinks [list]
+		variable showDocument 1
 
 		if {[ns_conn isconnected]} {
 		    if {"[ns_conn driver]" eq "nssock"} {
@@ -286,7 +321,18 @@ proc ::<ws>namespace {
 		set ::wsdb::servers::${serverName}::hostHeaderNames $hostHeader
 		::wsdl::definitions::new $serverName
 
-
+		# Add Documentation
+		lappend documentLinks config ::${xmlPrefix}
+		lappend documentLinks simpleTypes ::wsdb::types::${xmlPrefix}
+		lappend documentLinks complexTypes ::wsdb::elements::${xmlPrefix}
+		lappend documentLinks messages ::wsdb::messages::${xmlPrefix}
+		lappend documentLinks operations ::wsdb::operations::${xmlPrefix}
+		lappend documentLinks portTypes ::wsdb::portTypes::${xmlPrefix}
+		lappend documentLinks port ::wsdb::ports::[set ::${xmlPrefix}::portName]
+		lappend documentLinks binding ::wsdb::bindings::[set ::${xmlPrefix}::bindingName]
+		lappend documentLinks service ::wsdb::services::[set ::${xmlPrefix}::serviceName]
+		lappend documentLinks server ::wsdb::servers::[set ::${xmlPrefix}::serverName]
+ 		
 	    }
 
 	}
@@ -589,4 +635,40 @@ proc ::<ws>element {
 
 	}
     }
+}
+
+
+
+# Note: It might be more efficient to wrap <ws>doc in an isFrozen or showDocument check
+proc ::<ws>doc {
+    what
+    tclNamespace
+    name
+    docString
+} {
+    set xmlAlias [namespace tail $tclNamespace]
+    set tclNamespace ::$xmlAlias
+
+    while {1} {
+	# First check that we have a real web service
+	if {![<ws>namespace exists $tclNamespace]
+	    || [<ws>namespace isFrozen $tclNamespace]
+	} {
+	    break
+	}
+	# Only document certain components
+	# Note: eventually get search list from the web service
+	if {[lsearch -exact {type element operation} $what] == -1} {
+	    break
+	} else {
+	    set what ${what}s
+	}
+  
+	catch {::wsdl::doc::document doc $what $xmlAlias $name $docString}
+
+	break
+    }
+
+    return ""
+
 }

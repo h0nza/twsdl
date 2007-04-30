@@ -1,20 +1,20 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
- <title>United eWay tWSDL Plan: Web Services DB</title>
+ <title>United eWay tWSDL Plan: Web Services Database (WSDB)</title>
  <link rel="stylesheet" href="twsdl.css" type="text/css" >
 
 </head>
 <body>
 
-<div class="title">United eWay tWSDL: Web Services DB</div>
+<div class="title">United eWay tWSDL: Web Services Database</div>
  <div class="abstract">
  A single web service may be pieced togeather using an ad-hoc method. As long
  as the service works as intended, there is no need to rationalize the design
  or address larger issues faced by future developers. Since tWSDL will be used
  by developers to provide a variety of services, we must address the information
  architecture of a running web service server. This structured information will
- will be termed the Web Services DB.
+ will be termed the Web Services Database.
 
  </div>
  <div class="abstract">Temporary Note: In thinking about the WSDB, I realized that
@@ -24,68 +24,148 @@
  </div>
 
 <div class="cat">Simple Idea: Everything in One Place.
- <div class="body">The Web Services DB will be internally represented as a
- series of namespaced variables. This structure will allow for maximum introspection
- which will be needed to build services and to create and validate documents. 
+ <div class="body">The Web Services Database (WSDB) is internally represented as a
+ series of Tcl namespaces, configuration variables and dynamically generated code.
+ This structure allows for maximum introspection,
+ which is used to build and manage web services and to create and validate documents. 
  </div> 
 </div>
 
-<div class="cat">Example Structure for the Web Services DB
- <div class="body">Here is the potential structure for the Web Services DB:
+<div class="cat">Structure for the Web Services Database
+ <div class="body">Following is the current structure for the Web Services Database. 
+ One fact to keep in mind is that in XML Schema, simpleTypes and complexTypes can have
+ the same name, since they are in different XML namespaces. To reflect this fact, simpleTypes
+ and complexTypes are maintained in separate Tcl namespaces. In general, the Web Services
+ Database is partitioned into a hierarchy of Tcl namespaces which follow the pattern:
+<pre  class="code-example" title="Tcl Namespace Hierarchy">
+ :: wsdb
+   :: { structural component type }
+     :: { XML Namespace Alias }
+       :: { component name }
+         :: { variable children }
+</pre>
+
  <pre class="code-example" title="Web Services DB">
-# main namespace 
+# Main Tcl Namespace 
 ::wsdb
 
-# types 
-::wsdb::types
+# structural component type: schema (XML Schema Information)
+<a href="wsdb.tcl?ns=::wsdb::schema">::wsdb::schema</a>
 
-# type namespaces (not the same as Tcl namespaces)
-# for instance tcl for tcl types checked by [string is -strict ]
-::wsdb::types::tcl
-::wsdb::types::xsd
+# WSDB supports multiple XML Schema Namespaces.
+# XML Namespaces are intended to be univerally unique and use a
+#  short text string, called a prefix in an instance document.
+# WSDB uses a similar concept, called an alias which maps the
+#  unique XML Namespace to a internally unique text string.
+# For example the XML Schema Namespace mapping is:
+#  xsd = http://www.w3.org/2001/XMLSchema
 
-# type information for particular type (tcl string)
-::wsdb::types::tcl::string
-   
-# a particular namespace for global types which
-# are use as message types
-::wsdb::types::global
+# Schema to Alias Mappings (variable):
+$::wsdb::schema::aliasMap
 
-# messages 
-::wsdb::messages
+# Built in schema: XML Schema (alias = xsd):
+<a href="wsdb.tcl?ns=::wsdb::schema::xsd">::wsdb::schema::xsd</a>
 
-# one message (when messages are added, the type name is added to global types)
-::wsdb::messages::StockRequest
+# structural component type: simpleTypes
+<a href="wsdb.tcl?ns=::wsdb::types">::wsdb::types</a>
 
-# operations
-::wsdb::operations
+# simpleTypes in xsd (http://www.w3.org/2001/XMLSchema)
+<a href="wsdb.tcl?ns=::wsdb::types::xsd">::wsdb::types::xsd</a>
 
-# one operation (ordered list of message names)
-::wsdb::operations::StockQuoteOperation
+# xsd component: string 
+# The namespace contains variables and a procedure to validate 
+<a href="wsdb.tcl?ns=::wsdb::types::xsd::string">::wsdb::types::xsd::string</a>
 
-# portTypes
-::wsdb::porttypes
+# structural component type: complexTypes (elements)
+<a href="wsdb.tcl?ns=::wsdb::elements">::wsdb::elements</a>
+
+# element component in stockquoter (url:tcl:stockquoter)
+<a href="wsdb.tcl?ns=::wsdb::elements::stockquoter::StockQuote">::wsdb::elements::stockquoter::StockQuote</a>
+
+#
+# The following component types are specific to WSDL
+#
+
+# structural component type: messages 
+<a href="wsdb.tcl?ns=::wsdb::messages">::wsdb::messages</a>
+
+# Messages point to some individual element (from any namespace)
+
+# one message in stockquoter (alias) namespace:
+<a href="wsdb.tcl?ns=::wsdb::messages::stockquoter::StockRequest">::wsdb::messages::stockquoter::StockRequest</a>
+
+# structural component type: operations
+<a href="wsdb.tcl?ns=::wsdb::operations">::wsdb::operations</a>
+
+# Operations provide the key interface between XML Structures
+#  and internal Tcl procedures. An operation ties togeather:
+#  1. Input message type 
+#  2. Conversion of message to Tcl structures
+#  3. Invocation of Tcl procedure
+#  4. Conversion of Tcl results to specific format
+#  5. Creation of result document via 'new' procedure:
+$::wsdb::elements::stockquoter::StockQuote::new [list of child elements] 
+
+# one operation 
+# Maintains information and procedures necessary for invocation: 
+<a href="wsdb.tcl?ns=::wsdb::operations::stockquoter::StockQuoteOperation">::wsdb::operations::stockquoter::StockQuoteOperation</a>
+
+# structural component type: portTypes
+# portTypes represent a collection of operations which are:
+# 1. Free of transport bindings (SOAP) and possibly,
+# 2. Free of instance representation (RPC vs Document):
+<a href="wsdb.tcl?ns=::wsdb::portTypes">::wsdb::portTypes</a>
 
 # one portType
-::wsdb::porttypes::StockPortType
+<a href="wsdb.tcl?ns=::wsdb::porttypes::stockquoter::StockQuotePortType">::wsdb::porttypes::stockquoter::StockQuotePortType</a>
 
-# bindings
-::wsdb::bindings
 
+# structural component type: bindings
+# portTypes can be bound to multiple protocols and instance
+#  representations. Currently only document/literal is supported.  
+<a href="wsdb.tcl?ns=::wsdb::bindings">::wsdb::bindings</a>
+
+# Bindings can only be reused at the port level, so internal
+# namespace distinctions no longer apply. Bindings are also unique,
+# it is illegal to combine the same portType to the same binding
+# more than once.
+ 
 # one binding
-::wsdb::bindings::StockQuoteSoapBinding
+<a href="wsdb.tcl?ns=::wsdb::bindings::StockQuoteSoapBind">::wsdb::bindings::StockQuoteSoapBind</a>
 
+# structural component type: ports
+# Ports provide a physical URL for the associated binding.
 # ports
-::wsdb::ports
+<a href="wsdb.tcl?ns=::wsdb::ports">::wsdb::ports</a>
 
 # one port
-::wsdb::ports::StockQuoteSoapPort
+<a href="wsdb.tcl?ns=::wsdb::ports::StockQuotePort">::wsdb::ports::StockQuotePort</a>
 
-# services
-::wsdb::services
+
+# structural component type: services
+# A service can contain multiple ports, however, since
+# tWSDL can run multiple services at the same time, it is more common
+# to have one port per service:
+<a href="wsdb.tcl?ns=::wsdb::services">::wsdb::services</a>
 
 # one service
-::wsdb::services::StockQuoteService
+<a href="wsdb.tcl?ns=::wsdb::services::StockQuoteService">::wsdb::services::StockQuoteService</a>
+
+
+# tWSDL component: server
+<a href="wsdb.tcl?ns=::wsdb::servers">::wsdb::servers</a>
+
+# A tWSDL server defines the external targetNamespace.
+# A server is associated with a single WSDL file, and can contain
+#  multiple services, although there is usually no need to do this.
+# The server namespace also maintains information on how to start up
+# a listener, which host names and which path to use.
+
+# one server
+<a href="wsdb.tcl?ns=::wsdb::servers::StockQuoter">::wsdb::servers::StockQuoter</a>
+
+
+
  </pre>
 
 
