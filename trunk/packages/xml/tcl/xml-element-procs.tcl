@@ -141,3 +141,12 @@ proc ::xml::element::getAttribute { tclNamespace attributeName } {
 
     return [set ${tclNamespace}::.ATTRS($attributeName)]
 }
+
+proc ::xml::element::nilElement {
+    tclNamespace
+    childLocalname
+    {prefix {}}
+    {attributeList {}}
+} {
+    return [::xml::element::append $tclNamespace $childLocalname $prefix [concat $attributeList xsi:nil true]]
+}

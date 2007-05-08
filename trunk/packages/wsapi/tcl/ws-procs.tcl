@@ -55,11 +55,20 @@ proc ::<ws>return {tclNamespace} {
 		    set inputMessageConv [set ::wsdb::operations::${xmlPrefix}::${operation}::conversionList]
 		    set inputMessageSignature [list]
                     set inputFormElements ""
+		    set elementIndex 0
 		    set missing 0
+		    set missingIndexList [list]
 		    foreach {element type} $inputMessageConv {
 			if {"[set ${inputMessageType}.$element "[ns_queryget ${inputMessageType}.$element ""]"]" eq ""} {
-			    lappend inputMessageSignature $type
-			    incr missing
+
+			    lappend inputMessageSignature "$type"
+			    if {[set ::wsdb::elements::${xmlPrefix}::${inputMessageType}::MinOccurs($element)] > 0} {
+
+                                <ws>log Debug ".........missing element $element"
+				incr missing
+			    } else {
+				lappend missingIndexList $elementIndex
+			    }
 			} else {
 			    lappend inputMessageSignature [set ${inputMessageType}.$element]
 			}
@@ -70,6 +79,7 @@ proc ::<ws>return {tclNamespace} {
 <td><input type=\"text\" name=\"${inputMessageType}.$element\" value=\"[set ${inputMessageType}.$element]\" >
 </td>
 </tr>"
+			incr elementIndex
 		    }
 		    set requestID [::request::new "" "" ""]
 		    set requestNamespace ::request::$requestID
@@ -78,6 +88,11 @@ proc ::<ws>return {tclNamespace} {
 		    if {[llength $inputMessageSignature] < 2} {
 			set inputMessageSignature [lindex $inputMessageSignature 0]
 		    }
+		    if {$missing == 0 && [llength $missingIndexList] > 0} {
+			# Replace missing elements with emtpy string in case minOccurs = 0 for element
+			lset inputMessageSignature $missingIndexList ""
+		    }
+		    
 		    <ws>log Debug "<ws>return inputMessageSignature = '$inputMessageSignature'"
 		    set inputElement [::wsdb::elements::${xmlPrefix}::${inputMessageType}::new $inputXMLNS "$inputMessageSignature"]
 		    set targetNamespace [<ws>namespace set $tclNamespace targetNamespace]
@@ -427,6 +442,7 @@ proc ::<ws>proc {
     foreach argList $procArgsList {
 	<ws>log Debug "<ws>proc argList = '$argList'"
 
+	# This Array will remain available procArgsList length = 1;
 	if {[array exists elementData]} {
 	    array unset elementData
 	}
@@ -434,7 +450,7 @@ proc ::<ws>proc {
 	set argName [::wsdl::elements::modelGroup::sequence::getElementData\
 			 $argList elementData];
 
-	lappend inputConversionList $argName Value
+	lappend inputConversionList $argName
 
 	if {[info exists elementData(default)]} {
 	    lappend args [list $argName $elementData(default)]
@@ -449,18 +465,18 @@ proc ::<ws>proc {
     set returnTypeList [list]
     if {"$returns" eq "" || "$returnList" eq ""} {
 	lappend returnList [list ResultString]
-	lappend outputConversionList [list ResultString Value]
+	lappend outputConversionList [list ResultString]
     } else {
 
 	foreach returnArg $returnList {
-
+	    # This Array will remain available returnList length = 1;
 	    if {[array exists returnData]} {
 		array unset returnData
 	    }
 
 	    lappend outputConversionList \
 		[::wsdl::elements::modelGroup::sequence::getElementData\
-		     $returnArg returnData] Value;
+		     $returnArg returnData];
 	}
     }
 
@@ -491,7 +507,7 @@ proc ::<ws>proc {
     # WSDL Operation
     set operationName ${baseName}Operation
     eval [::wsdl::operations::new $xmlPrefix $operationName \
-	      [list $procName $inputConversionList] \
+	      [list $procName $procArgsList] \
 	      [list input $inputMessageName] [list output $outputMessageName]];
     
     <ws>namespace lappend $tclNamespace operations $operationName
@@ -639,7 +655,8 @@ proc ::<ws>element {
 
 
 
-# Note: It might be more efficient to wrap <ws>doc in an isFrozen or showDocument check
+# Note: It might be more efficient to wrap <ws>doc
+#  in an isFrozen or showDocument check
 proc ::<ws>doc {
     what
     tclNamespace

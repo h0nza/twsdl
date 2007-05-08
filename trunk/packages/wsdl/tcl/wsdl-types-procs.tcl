@@ -158,7 +158,9 @@ proc ::wsdl::elements::modelGroup::sequence::getElementData {
     array set ElementArray [list name $Element type $Type minOccurs $facetArray(minOccurs)\
 			    maxOccurs $facetArray(maxOccurs) facets [array get facetArray] \
 			   form $facetArray(form)]
-    
+    if {[info exists facetArray(default)]} {
+	set ElementArray(default) $facetArray(default)
+    }
     return $Element
 }
 
@@ -320,88 +322,146 @@ namespace eval ::wsdb::elements::${schemaAlias}::${parentElement}::$element \{
 
 }
 
+# Procedures to write part of new element proc
 namespace eval ::wsdl::elements::modelGroup::sequence {
-    # writer_RequiredForeachDefault
-    proc writer_000 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
+    proc writer_maxOccurs1 {NewProc Index} {
+	
+	return "
+    if \{\[lindex \$childValuesList $Index\] ne \"\"\} \{
         $NewProc \$typeNS \[lindex \$childValuesList $Index\]
-    \}"
-
+    \} else \{"
     }
-    proc writer_001 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
-        $NewProc \$typeNS \[lindex \$childValuesList $Index\]
-    \} else \{
+    
+    proc writer_maxOccurs1+ {NewProc Index} {
+	
+	return "
+    if \{\[llength \[lindex \$childValuesList $Index\]\]\} \{
+        foreach childValue \[lindex \$childValuesList $Index\] \{
+            $NewProc \$typeNS \$childValue
+        \}
+    \} else \{"
+    }
+    
+    proc writer_defaultMinOccurs1+ {NewProc Default} {
+	return "
         $NewProc \$typeNS [list $Default]
     \}"
-
     }
-    proc writer_010 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
-        foreach ChildValue \[lindex \$childValuesList $Index\] \{
-            $NewProc \$typeNS \$ChildValue
-        \}
-    \}"
-
-    }
-    proc writer_011 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
-        foreach ChildValue \[lindex \$childValuesList $Index\] \{
-            $NewProc \$typeNS \$ChildValue
-        \}
-    \} else \{
-        foreach ChildValue \[list $Default\] \{
-            $NewProc \$typeNS \$ChildValue
-        \}
+    proc writer_noDefaultMinOccurs1+ {NewProc Child} {
+	return "
+        return -code error \"Missing value for required Element $Child with no default value calling $NewProc\"
     \}"
     }
-    proc writer_100 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
-        $NewProc \$typeNS \[lindex \$childValuesList $Index\]
-    \} else \{
-        return -code error \"Missing value for required element \[namespace current\] index $Index\"
+    proc writer_nillableMinOccurs0 {ElementName } {
+	return "
+        ::xml::element::nilElement \$typeNS $ElementName
     \}"
+    } 
+    
+    proc writer_defaultMinOccurs0 {NewProc Default} {
+	return [writer_defaultMinOccurs1+ $NewProc $Default]
+    }
+    
+    proc writer_noDefaultMinOccurs0 { Child } {
+	return "
+        \# skip element $Child
+    \}"
+    }
+    
+    
+}
+
+set ::wsdl::elements::modelGroup::sequence::doc {
+    nil value = "", when input is "", include code to handle nil value
+    nillable minOccurs maxOccurs default inValue | do_what?                  | Notes
+    +        0         1         none    ""      | <element xsi:nil="true"/> | Ignore minOccurs and default
+    +        0         1         none    "abc"   | <element>abc</element>    | normal case 
+    +        0         1         "abcd"  ""      | <element xsi:nil="true"/> | ignore default
+    +        0         1         ""      ""      | <element xsi:nil="true"/> | ignore default
+
+    +        0         2+        none    ""      | <element xsi:nil="true"/> | Ignore minOccurs and default
+    +        0         2+        none    "abc"   | <element>abc</element>    | normal case 
+    +        0         2+        "abcd"  ""      | <element xsi:nil="true"/> | ignore default
+    +        0         2+        ""      ""      | <element xsi:nil="true"/> | ignore default
+
+    +        1         1         none    ""      | ERROR                     | ERROR (nillable ignored)
+    +        1         1         none    "abc"   | <element>abc</element>    | normal case 
+    +        1         1         "abcd"  ""      | <element>abcd</element>   | default replaces nil value.
+    +        1         1         ""      ""      | <element></element>       | empty string IS default
+
+    +        1         2+        none    ""      | ERROR                     | ERROR (nillable ignored)
+    +        1         2+        none    "abc"   | <element>abc</element>    | normal case
+    +        1         2+        "abcd"  ""      | <element>abcd</element>   | default replaces nil value.
+    +        1         2+        ""      ""      | <element></element>       | empty string IS default
+
+    -        0         1         none    ""      | skip inclusion            | handle nil
+    -        0         1         none    "abc"   | <element>abc</element>    | normal case 
+    -        0         1         "abcd"  ""      | <element>abcd</element>   | default replaces nil value.
+    -        0         1         ""      ""      | <element></element>       | empty string IS default
+   
+    -        0         2+        none    ""      | skip inclusion            | handle nil
+    -        0         2+        none    "abc"   | <element>abc</element>    | normal case 
+    -        0         2+        "abcd"  ""      | <element>abcd</element>   | default replaces nil value.
+    -        0         2+        ""      ""      | <element></element>       | empty string IS default
+
+    -        1         1         none    ""      | ERROR                     | ERROR
+    -        1         1         none    "abc"   | <element>abc</element>    | normal case 
+    -        1         1         "abcd"  ""      | <element>abcd</element>   | default replaces nil value.
+    -        1         1         ""      ""      | <element></element>       | empty string IS default
+
+    -        1         2+        none    ""      | ERROR                     | ERROR
+    -        1         2+        none    "abc"   | <element>abc</element>    | normal case 
+    -        1         2+        "abcd"  ""      | <element>abcd</element>   | default replaces nil value.
+    -        1         2+        ""      ""      | <element></element>       | empty string IS default
+
+    {
+	Notes: 
+	0. see <http://www.w3.org/TR/xmlschema-0/\#Nils>
+	1. nillable is only in effect if minOccurs = 0 and inValue = ""
+	2. if minOccurs = 1+, an inValue = "" triggers use of default, BUT:
+	3. if minOccurs = 1+, an inValue of "" and no default forces ERROR
+	4. if inValue of "" is valid for a minOccurs = 1+, set default to ""
+	
+	Notes on difference between maxOccurs = 1 and maxOccurs > 1:
+	1. inValue is considered a list if maxOccurs > 1.
+	2. inValue is considered a single value if maxOccurs = 1.
+	3. list length whitespace is ZERO: "", " ", "   ": all have llength = 0;
+	4. list length of {} is ZERO. A default value of "{}" for a maxOccurs > 1
+	   will not execute any times inside a foreach.
+	5. list length of {{}} is ONE. 
+
+	possible check sequence:
+	1. if inValue = "somevalue" --> normal case
+	if {[llength $childValuesList $i]} {
+           handle_normal_case
+	} else {
+	}
+	2. else if nillable = true && minOccurs = 0 --> handle nillable (This finishes off nillable)
+	3. if minOccurs = 0 && default exists --> use default as inValue
+        4. if minOccurs = 0 && no default --> skip inclusion
+        5. if default exists --> use default as inValue
+        6. create element with content = ""
+
 
     }
-    proc writer_101 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
-        $NewProc \$typeNS \[lindex \$childValuesList $Index\]
-    \} else \{
-        $NewProc \$typeNS [list $Default]
-    \}"
 
+    {
+	Algrithm 2:
+	Step 1, Line 1-2: formatting if based upon maxOccurs:
+	 if maxOccurs = 1 use if {[lindex $childValuesList $i] ne ""} { do foreach [list [lindex $childValuesList $i]] }
+	 else (maxOccurs > 1) if {[llength [lindex $childValuesList $i]]} { do foreach [lindex $childValuesList $i] } 
+	
+	Step 2, line 3: Else do what if null/length=0??
+	 Case A: minOccurs > 0:
+	  if default exists and maxOccurs = 1+ use {do make element with $default }
+	 
+	  no default exists and maxOccurs = 1+ use {ERROR}
+	
+	 Case B: minOccurs = 0:
+	  if nillable use {do make xsi:nil element}
+	  if not nillable and default exists use {do make element with $default }
+          if not nillable and no default use {do skip element}
     }
-    proc writer_110 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
-        foreach ChildValue \[lindex \$childValuesList $Index\] \{
-            $NewProc \$typeNS \$ChildValue
-        \}
-    \} else \{
-        return -code error \"Missing value for required element \[namespace current\] index $Index\"
-    \}"
-
-    }
-    proc writer_111 { NewProc Index Default } {
-        return "
-    if \{\$ChildLength > $Index\} \{
-        foreach ChildValue \[lindex \$childValuesList $Index\] \{
-            $NewProc \$typeNS \$ChildValue
-        \}
-    \} else \{
-        foreach ChildValue \[list $Default\] \{
-            $NewProc \$typeNS \$ChildValue
-        \}
-    \}"
-
-    }
-
 }
 
 # writeNewProc writes procedure to create new element
@@ -428,33 +488,13 @@ proc ::wsdl::elements::modelGroup::sequence::writeNewProc {
 
     append script "\nproc ${namespace}::new \{ instanceNamespace childValuesList \} \{
 
-    set typeNS \[::xml::element::append \$\{instanceNamespace\} $ParentName\]
-    set ChildLength \[llength \$childValuesList\]"
- 
+    set typeNS \[::xml::element::append \$instanceNamespace $ParentName\]"
+    
 	
     if {$ChildCount == 1} {
 	append script "
     set childValuesList \[list \$childValuesList\]"
     }
-  
-    # Chart to show Expected Actions based upon structures
-    # min | max | supplied | default | result   | comment
-    #
-    #   0     1          +         -   supplied | value taken from supplied
-    #   0     1          -         +   default  | default value used
-    #   0     1          -         -   not shown| element not included
-    #
-    #   0     2+         +         -   supplied | foreach supplied
-    #   0     2+         -         +   default  | foreach default value
-    #   0     2+         -         -   not shown| required element missing
-    #
-    #   1     1          +         -   supplied | value taken from supplied
-    #   1     1          -         +   default  | default value used
-    #   1     1          -         -   error    | required element missing
-    #
-    #   1     2+         +         -   supplied | foreach supplied
-    #   1     2+         -         +   default  | foreach default value
-    #   1     2+         -         -   error    | required element missing
 
     for {set i 0} {$i < $ChildCount} {incr i} {
 	
@@ -468,30 +508,30 @@ proc ::wsdl::elements::modelGroup::sequence::writeNewProc {
 
 	set NewProc \$${Base}::${Child}::new
 
-	# If required
-	if {$MinOccurs($Child) eq 0} {
-	    set Required 0
+	# Step 1: handle non empty value based upon maxOccurs
+	if {$MaxOccurs($Child) == 1} {
+	    append script [writer_maxOccurs1 $NewProc $i]
 	} else {
-	    set Required 1
+	    append script [writer_maxOccurs1+ $NewProc $i]
 	}
-	# Foreach 
-	if {$MaxOccurs($Child) > 1} {
-	    set Foreach 1
+	# Step 2: We have a null value what to do?
+	# Case A: minOccurs > 0
+	if {$MinOccurs($Child) > 0} {
+	    # Check if default exists
+	    if {[info exists ChildData(default)]} {
+		append script [writer_defaultMinOccurs1+ $NewProc $ChildData(default)]
+	    } else {
+		# stick in passed in null value or whitespace
+		append script [writer_noDefaultMinOccurs1+ $NewProc $Child ]
+            }
+	} elseif {[info exists ChildData(nillable)]
+		  && "$ChildData(nillable)" eq "true"} {
+	    append script [writer_nillableMinOccurs0 $Child]
+	} elseif {[info exists ChildData(default)]} {
+	    append script [writer_defaultMinOccurs0 $NewProc $ChildData(default)]
 	} else {
-	    set Foreach 0
+	    append script [writer_noDefaultMinOccurs0 $Child]
 	}
-	# Default Exists?
-	if {[info exists ChildData(default)]} {
-	    set Default 1
-	} else {
-	    set ChildData(default) ""
-	    set Default 0
-	}
-	
-	# Name Writer Proc:
-	set writer "writer_$Required$Foreach$Default"
-
-	append script [$writer $NewProc $i $ChildData(default)]
 
     }
 

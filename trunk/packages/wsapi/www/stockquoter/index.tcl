@@ -23,7 +23,7 @@
     {Symbol:stock::symbol          }
     {Quote:stock::quote           }
     {DateOfChange:stock::dateOfChange {minOccurs 0}}
-    {Name:stock::name         {minOccurs 0 nillable no}}
+    {Name:stock::name         {minOccurs 0 nillable true}}
     {Trend:stock::trend        {minOccurs 0}}
     {DailyMove:stock::dailyMove    {minOccurs 0}}
     {LastMove:stock::lastMove     {minOccurs 0}}
@@ -39,47 +39,62 @@
     User supplies NYSE symbol and a verbose flag for additional data.}
 
 <ws>element sequence stock::StocksRequest {
-    {StockRequest:elements::stock::StockRequest {maxOccurs 4}}
+    {Symbol:stockquoter::symbol {maxOccurs 8 default "MSFT"}}
+    {Verbose:stockquoter::verbose {minOccurs 0 default "1"}}
 }
 
 <ws>doc element stock StocksRequest {Multiple StockRequest in one document.}
 
-if {0} {
-    # This Form is equivalent to the short form below
-    <ws>proc ::stock::Stock {Symbol:stock::symbol {Verbose:stock::verbose {default 0}} } {
-
-	set StockValue [format %0.2f [expr 25.00 + [ns_rand 4].[format %0.2d [ns_rand 99]]]]
-	if {$Verbose} {
-	    return [list $Symbol $StockValue 2006-04-11T00:00:00Z "SomeName Corp. " 1 0.75 0.10]
-	} else {
-	    return [list $Symbol $StockValue]
-	}
-	
-    } returns {
-	Symbol:stock::symbol
-	Quote:stock::quote 
-	DateOfChange:stock:dateOfChange
-	Name:stock::name
-	Trend:stock::trend
-	DailyMove:stock::dailyMove
-	LastMove:stock::lastMove
-    }
-
-} else {
-    # This form just restates the inputs by name
-    # This relies on the fact that the default input type is named StockRequest
-    # This form is for testing, and will likely go away for a shorter easier format.
-    <ws>proc ::stock::Stock {Symbol Verbose} {
-	
-	set StockValue [format %0.2f [expr 25.00 + [ns_rand 4].[format %0.2d [ns_rand 99]]]]
-	if {$Verbose} {
-	    return [list $Symbol $StockValue 2006-04-11T00:00:00Z "SomeName Corp. " 1 0.75 0.10]
-	} else {
-	    return [list $Symbol $StockValue]
-	}
-	
-    } returns { }
+<ws>element sequence stock::StocksResponse {
+    {StockResponse:elements::stock::StockResponse {maxOccurs 8}}
 }
+
+# This form just restates the inputs by name
+# This relies on the fact that the default input type is named StockRequest
+# This form is for testing, and will likely go away for a shorter easier format.
+<ws>proc ::stock::Stock {
+    Symbol
+    {Verbose {default 0 minOccurs 0} }
+} {
+    
+    set StockValue [format %0.2f [expr 25.00 + [ns_rand 4].[format %0.2d [ns_rand 99]]]]
+    if {$Verbose} {
+	return [list $Symbol $StockValue 2006-04-11T00:00:00Z "SomeName Corp. " 1 0.75 0.10]
+    } else {
+	return [list $Symbol $StockValue]
+    }
+    
+} returns { }
+
+# Example does same as ::stock::Stocks below
+# Note that the return type name 'QuotesDummy' is unused,
+#  as the name is 'QuotesResponse', named after proc name.
+<ws>proc ::stock::Quotes {
+    {Symbol:stock::symbol {maxOccurs 3}}
+    {Verbose:stock::verbose {minOccurs 0 default 0}}
+} {
+    set resultList [list]
+    foreach symbol $Symbol {
+	lappend resultList [Stock $symbol $Verbose]
+    }
+    return $resultList
+} returns {
+    {QuotesDummy:elements::stock::StockResponse {maxOccurs 8}}
+}
+
+
+<ws>proc ::stock::Stocks {
+    {Symbol {maxOccurs 8} }
+    {Verbose {default 0 minOccurs 0} } 
+} {
+
+    set resultList [list]
+    foreach symbol $Symbol {
+	lappend resultList [Stock $symbol $Verbose]
+    }
+    return $resultList
+} returns { }
+
 
 <ws>namespace set ::stock showDocument 1
 
