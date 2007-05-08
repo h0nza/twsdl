@@ -1,0 +1,338 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: Types API</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+
+<div class="title">United eWay tWSDL: Types API</div>
+<div class="abstract">
+ The tWSDL Types Component will likely be one of the largest. The Types 
+ Component API will be used to define types, to create instances of 
+ a given type and to verify that an instance conforms to the type 
+ definition. 
+ <p>The Types API will closely follow the method of type construction
+ in XML Schema, where complex types are composed (built up from)
+ other complex types and of simple types. Simple types are restrictions
+ of built-in primitive types. 
+</div>
+ 
+
+<div class="cat">Defining A Type
+ <div class="body">In XML Schema a type has
+  <ul>
+   <li>A name</li>
+   <li>A namespace</li>
+   <li>A definition</li>
+   <li>A base type</li>
+  </ul>
+  <p>Built in types, also known as primitive types, have a special namespace, and
+  do not have a base type. User
+  defined types can use any other namespace, so that the user defined type could
+  have the same name as a primitive type without creating a conflict. The definition
+  of a type is somewhat complicated. There are a number of methods of defining
+  a type. The tWSDL Type Component will support many, but not all of these methods.
+  One API procedure will be needed for each method of defining a type. Here
+  is a list of the most useful methods:</p>
+  <ul>simpleTypes (Restriction)
+   <li>Rename (creates additional name for existing type)</li>
+   <li>Restrict by Enumeration (list of choices)</li>
+   <li>Restrict by Pattern (regular expression)</li>
+  </ul>
+  <ul>complexTypes (Extension) <a href="http://www.w3.org/TR/xmlschema-1/#Model_Groups">ref</a>
+   <li>Model Group Sequence (ordered multiple occurance)</li>
+   <li>Model Group All (at most one of each) [note: supported as sequence]</li>
+   <li>Model Group Choice (one of the following) [note: not supported]</li>
+  </ul>
+ </div>
+</div>
+
+<div class="cat">Primitive Types
+ <div class="body">The tWSDL Type Component will be seeded with built-in
+ primitive types. The function of the API which adds a new primitive type
+ to the system is to map the <span class="code">prefix:name</span> to a validation procedure. 
+ Every type will have a validation procedure, the name of which is based
+ upon the namespace and name of the type. The primitive type API is a 
+ simplified version of the simpleType API. Most of the work in building
+ up primitive types will be in the validation procedure. A number of these
+ are already completed, including the most difficult ones dealing with
+ times, dates and durations. 
+
+ <pre class="code-example" title="Primitive Type Example API for anySimpleType">
+
+# call with typeNamespace, typeName, validation code, description
+
+<a href="procs.tcl?ns=::wsdl::types::primitiveType::new">::wsdl::types::primitiveType::new</a> tcl anySimpleType {return 1} \
+ {Base type, should return true for every case}
+
+# then the following should return 1 in every case:
+
+<a href="procs.tcl?ns=::wsdb::types::tcl::anySimpleType::validate">::wsdb::types::tcl::anySimpleType::validate</a> "My String Always Valid"
+
+# Assumes that newPrimitiveType places primitive types in a namespace called 'tcl'
+
+ </pre>
+
+ </div>
+</div>
+
+<div class="cat">Simple Types (simpleTypes)
+ <div class="body">All simpleTypes are based upon a restriction of 
+ either another simpleType or of a primitive type. There will be three 
+ APIs for creating simpleTypes. All three APIs require a 
+ <span class="term">type namespace</span> and a 
+ <span class="term">type name</span>. In the simpleType APIs, the 
+ <span class="term">type namespace</span> is an alias, analogous to a
+ prefix in an XML namespace. There will be a map to associate an alias
+ to the formal namespace. In the examples below the 
+ <span class="term">type namespace</span>, or alias will be 'vs'.
+ <ul>Three simpleType APIs:
+  <li><span class="code">simpleType::new</span> requires a base type and a procedure
+ to validate, which has to return 0 or 1.</li>
+  <li><span class="code">simpleType::restrictByEnumeration</span>  makes it easy to 
+ restrict by an enumeration. Instead of a procedure, the API requires a list
+ of possible choices.</li>
+  <li><span class="code">simpleType::restrictByPattern</span> requires a pattern instead of a procedure.
+ The pattern is a regular expression used to validate the input data.</li>
+ </ul>
+
+ <pre class="code-example" title="SimpleType Example API for 'numbers'">
+
+proc <a href="procs.tcl?ns=::wsdl::types::simpleType::new">::wsdl::types::simpleType::new</a> {typeNamespace typeName baseType} {...}
+
+# call with type namespace, type name, base type
+
+::wsdl::types::simpleType::new "vs" numbers xsd::integer
+
+# Note that this simply aliases the type xsd::integer calling it 'numbers'
+
+# You call the validation code by reference:
+
+$::wsdb::types::vs::numbers::validate 8
+
+ </pre>
+ <p>Restriction by Enumeration:</p>
+ <pre class="code-example" title="SimpleType Example API Restriction by Enumeration: 'someNumbers'">
+
+proc ::wsdl::types::simpleType::restrictByEnumeration {typeNamespace typeName baseType enumerationList} {...}
+# call with typeNamespace, typeName, baseType and enumerated list of possible values:
+
+::wsdl::types::simpleType::restrictByEnumeration "vs" someNumbers vs::numbers {5 6 7 8 9} 
+
+# The following should return false (0):
+
+$::wsdb::types::vs::someNumbers::validate 10
+
+ </pre> 
+
+ <p>Restriction by Pattern</p>
+ <pre class="code-example" title="Restriction by Pattern API">
+
+::proc ::wsdl::types::simpleType::restrictionByPattern {typeNamespace typeName baseType pattern} {...}
+
+# Call with typeNamespace, typeName baseType and regular expression:
+
+::wsdl::types::simpleType::restrictionByPattern vs guid xsd::string {
+[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}
+
+# use the type variable for validation:
+
+$::wsdb::types::vs::guid::validate 92ab783d-9303-571F-AC32-03bAcD9671F1
+
+ </pre>
+
+ <p>Notice that in order to validate a simple type, you use the value of the variable 
+ <span class="term">validate</span>. When a new simpleType is created, a Tcl namespace is
+ defines which at minimum contains the variable validate which references a procedure
+ which handles the validation. This allows the developer to use any previously written 
+ Tcl procedure, the only restriction is that the procedure must return 1 if the data
+ is valid and 0 otherwise. Complex type validation follows an similar pattern except that
+ the validation procedure takes a reference to the complexType (Tcl namespace).
+ </div>
+</div>
+
+<div class="cat">Building up Complex Types
+ <div class="body">Once a simpleType has been added to the Type Component,
+ it can be used in the construction of a complexType. In tWSDL, a complexType
+ is a series of <a href="http://www.w3.org/TR/xmlschema-1/#cParticles">particles</a>.
+ A particle is a type with the added information of the minimum occurances, maximum
+ occurances and something called the term. In the API, a term is a reference to
+ the <span class="term">typeName</span> including the <span class="term">typeNamespace</span>.
+
+ </div>
+</div>
+<div class="cat">Model Groups
+ <div class="body">A model group specifies the composition of elements used to define
+ a complexType type. The division into choice, sequence and all are based more on procedural
+ language constructs and data storage issues than actual data model details.
+ In tWSDL, all elements are stored the same regardless of the model group. Therefore,
+ some of the restrictions detailed in XML Schema can be safely ignored. 
+ </div>
+</div>
+
+<div class="cat">Model Group Sequence and All
+ <div class="body">Model Group All implies that each particle can occur at most once.
+ In many procedural languages this implies that an associative array could be used for storage
+ without the need to worry about name collisions. Model Group Sequence is restricted
+ to being an ordered list of particles, each particle occuring zero or more times,
+ but all particles of a given type must be arranged consecutively. The procedural
+ language reason for this is to ensure very rapid access to the initial particle of a
+ given type by narrowing the range of possible start indexes. It is probably unnecessary
+ to require this intrepretation in tWSDL, and there is no reason to force particles
+ to be serialized in a particular order within an element. Although the tWSDL server can handle 
+ a sequence in any order, it produces sequences in the required order.
+
+ </div>
+</div>
+
+<div class="cat">Model Group Choice
+ <div class="body">Model Group Choice can be thought of as the complexType equivalent
+ of enumeration. However, Choice leaves open the possibility of different base types.
+ I'm not sure it is a great thing to have a single type name containing different actual
+ types. At present, tWSDL does not support Model Group Choice. 
+ </div>
+</div>
+
+<div class="cat">Mapping Between an XML Schema Type and tWSDL API
+ <div class="body">
+ <p>The following is an example of how to approach
+ the construction of an API to build up a type based upon the
+ XML fragment representing the type.</p>
+ <p>Restriction by Enumeration:
+ </p>
+ <pre class="code-example" title="Restriction by Enumeration XML Fragment">
+
+&lt;s:simpleType name="CreditCardTypeCode">
+ &lt;s:restriction base="xsd:string">
+  &lt;s:enumeration value="Visa" />
+  &lt;s:enumeration value="Mastercard" />
+  &lt;s:enumeration value="AmericanExpress" />
+  &lt;s:enumeration value="Discover" />
+  &lt;s:enumeration value="DinersClub" />
+ &lt;/s:restriction>
+&lt;/s:simpleType>
+ </pre>
+
+ <p>This simpleType can be create via the following API call:
+
+ <pre class="code-example" title="Restriction by Enumeration API">
+
+::wsdl::types::simpleType::restrictByEnumeration vs CreditCardTypeCode xsd::string {
+ "Visa"  
+ "Mastercard"
+ "AmericanExpress"
+ "Discover"
+ "DinersClub" 
+}
+ </pre>
+
+ <p>Notice that the 'vs' type namespace (prefix/alias)
+ is not shown in the WSDL file because vs is the targetNamespace, and uses the
+ prefix 'tns' in the WSDL file.</p>
+
+ <p>Restriction by Pattern:
+ </p>
+ <pre class="code-example" title="Restriction by Pattern XML Fragment">
+
+&lt;s:simpleType name="guid">
+  &lt;restriction base="xsd:string">
+    &lt;pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />
+  &lt;/s:restriction>
+&lt;/s:simpleType>
+
+ </pre>
+
+ <p>This simpleType can be create via the following API call:</p>
+
+ <pre class="code-example" title="Restriction by Pattern API">
+
+::wsdl::types::simpleType::restrictByPattern vs guid xsd::string \
+    {[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}};
+ </pre>
+ <p>Model Group Sequence:
+ </p>
+ <pre class="code-example" title="Complex Type Model Group Sequence XML Fragment">
+
+&lt;xsd:complexType name="DonorDataResponse">
+ &lt;xsd:sequence>
+   &lt;xsd:element minOccurs="0" maxOccurs="1" name="Result" type="tns:DonorData" />
+   &lt;xsd:element minOccurs="0" maxOccurs="1" name="Source" type="xsd:string" />
+   &lt;xsd:element minOccurs="0" maxOccurs="20" name="ErrorMessageList" type="tns:ErrorString" />
+   &lt;xsd:element minOccurs="0" maxOccurs="1" name="StackTrace" type="xsd:string" />
+ &lt;/xsd:sequence>
+&lt;/xsd:complexType>
+ </pre>
+
+ <p>The DonorDataResponse would be defined in the following way:</p>
+ <pre class="code-example" title="Creating DonorDataResponse">
+<a href="procs.tcl?ns=::wsdl::elements::modelGroup::sequence::new">::wsdl::elements::modelGroup::sequence::new</a> vs DonorDataResponse {
+    {Result:elements::vs::DonorData {minOccurs 0}}
+    {Source {minOccurs 0}}
+    {ErrorMessageList:vs::ErrorString {minOccurs 0 maxOccurs 20}}
+    {StackTrace {minOccurs 0}}
+} 
+
+# Note1: When the base type is xsd:string, 
+#  you do not need to include any type information.
+#
+# Note2: If the base type namespace is XML Schema (xsd prefix), 
+#  you do not need to include the prefix (xsd::dateTime = dateTime)
+# Note3: when the base type is a complexType, 
+#  you have to prefix the base type with 'elements::'
+#  The referenced base complexType must exists prior to use.
+
+ </pre>
+ <p>Model Group Sequence (Extend complexType) [Note: Unimplimented]:</p>
+ </p>
+ <pre class="code-example" title="Extend Model Group Sequence XML Fragment">
+
+&lt;xsd:complexType name="DirectBillDonationPaymentData">
+ &lt;xsd:complexContent mixed="false">
+   &lt;xsd:extension base="tns:DonationPaymentData">
+     &lt;xsd:sequence>
+       &lt;xsd:element minOccurs="1" maxOccurs="1" name="StartDate" type="xsd:dateTime" />
+       &lt;xsd:element minOccurs="0" maxOccurs="1" name="BillingAddress" type="tns:AddressData" />
+     &lt;/xsd:sequence>
+   &lt;/xsd:extension>
+ &lt;/xsd:complexContent>
+&lt;/xsd:complexType>
+ </pre>
+ <pre class="code-example" title="Extend Model Group Sequence API ">
+
+::wsdl::elements::modelGroup::sequence::extendSequence vs\
+  "DirectBillDonationPaymentData"\
+  "elements::vs::DonationPaymentData" \
+{
+  {StartDate:dateTime}
+  {BillingAddress:vs::AddressData {minOccurs 0}}
+}
+ </pre>
+
+ <p>Note: Extending a sequence is not supported, but here are some ideas:</p>
+ <ul>
+  <li>Since Tcl does not support the idea of extended types, etc. The API will copy the 
+  type to be extended and then add the new elements to the end. All types created in tWSDL
+  copy the data used during creation, so it is easy to get this data. </li>
+  <li>Since types are created dynamically, it may be risky to use extended types, XML standards
+  and Tcl cannot guarantee on the continued existance of the base type.</li>
+ </ul>
+
+ </div>
+</div>
+
+<div class="cat">
+ <div class="body">
+
+ </div>
+</div>
+
+<div class="cat">
+ <div class="body">
+
+ </div>
+</div>
+
+</body>
+</html>
