@@ -13,33 +13,48 @@ namespace eval ::wsdl::operations {
 
 
 proc ::wsdl::operations::new {
-
     operationNamespace
     operationName
     operationSignature
     args
 } {
 
-    namespace eval ::wsdb::operations::${operationNamespace} { }
-    
-    namespace eval ::wsdb::operations::${operationNamespace}::${operationName} {
-	variable messages [list]
-	variable invoke
-	variable operationProc
-	variable conversionList
-    }
+    log Debug "operations::new on = $operationNamespace oName = $operationName oSig = $operationSignature args = $args"
+    # Ensure tcl namespace exists:
+    namespace eval ::wsdb::operations::${operationNamespace}::$operationName { }
 
-    namespace eval ::wsdb::operations::${operationNamespace}::${operationName} {
-	set invoke [namespace code {Invoke}]
-    }
     set operationProc [lindex $operationSignature 0]
-    set conversionList [lindex $operationSignature 1]
-    set ::wsdb::operations::${operationNamespace}::${operationName}::operationProc $operationProc
-    set ::wsdb::operations::${operationNamespace}::${operationName}::conversionList $conversionList
+    set inputElementData [lindex $operationSignature 1]
+    set procSignature [::wsdl::operations::getProcSignature $operationProc]
 
+    set inputConversionList [list]
+    set inputDefaultCodeBlock ""
     set procArgs [list]
-    foreach {var conversion} $conversionList {
-	lappend procArgs "\$$var"
+    set operationArgs [list]
+    foreach argList $inputElementData {
+	#log Debug "wsdl::operations::new argList = '$argList'"
+
+	# This Array will remain available procArgsList length = 1;
+	if {[array exists elementData]} {
+	    array unset elementData
+	}
+
+	set argName [::wsdl::elements::modelGroup::sequence::getElementData\
+			 $argList elementData];
+
+	log Debug "wsdl::operations::new elementData = [array get elementData]"
+	# Default Values
+	if {$elementData(maxOccurs) > 1} { 
+	    lappend inputConversionList $argName List
+	} else {
+	    lappend inputConversionList $argName Value
+	}
+	if {"$elementData(minOccurs)" eq "0"} {
+	    append inputDefaultCodeBlock "
+    set $argName [list $elementData(default)]"
+	}
+
+	lappend operationArgs "\$$argName"
     }
 
     set inputCodeBlock ""
@@ -62,21 +77,32 @@ proc ::wsdl::operations::new {
 	    continue
 	}
 
-	log Notice "operations::new adding message $arg"
-	lappend :::wsdb::operations::${operationNamespace}::${operationName}::messages $arg
+	log Notice "operations::new adding message $arg to ::wsdb::operations::${operationNamespace}::${operationName}::messages"
+	lappend OperationMessages $arg
 
     }    
 
-    set operationProcArgs [join $procArgs " "]
-    set script ""
+    set script "
+namespace eval ::wsdb::operations::${operationNamespace}::${operationName} \{
+    variable messages [list $OperationMessages]
+    variable invoke \[namespace code \{Invoke\}\]
+    variable operationProc $operationProc
+    variable inputElementData [list $inputElementData]
+    variable procSignature $procSignature
+    variable conversionList \[list $inputConversionList\]
+\}"
+
+
+    set operationProcArgs [join $operationArgs " "]
+
     append script "
 proc ::wsdb::operations::${operationNamespace}::${operationName}::Invoke \{ 
     inputXMLNS
     outputXMLNS
 \} \{
-    variable conversionList
+    variable conversionList$inputDefaultCodeBlock
     ::xml::childElementsAsListWithConversions \$inputXMLNS \$conversionList
-    
+    ::tws::log::log Debug \"Invoking ::wsdb::elements::${operationNamespace}::${outputElement}::new \$outputXMLNS |$operationProc $operationProcArgs|\"
     return \[::wsdb::elements::${operationNamespace}::${outputElement}::new \$outputXMLNS \[$operationProc $operationProcArgs\]\]
 \}
 "
@@ -153,4 +179,25 @@ proc ::wsdl::operations::getFaultMessageType {
     } else {
 	return ""
     }
+}
+
+
+
+proc ::wsdl::operations::getProcSignature {
+    proc
+} {
+    if {"[info procs $proc]" ne "$proc"} {
+	return [list]
+    }
+    set args [info args $proc]
+    set arguments [list]
+    foreach arg $args {
+	if {[info default $proc $arg defaultValue]} {
+	    lappend arguments "[list [list $arg $defaultValue]]"
+	} else {
+	    lappend arguments "[list $arg]"
+	}
+    }
+
+    return [list $arguments]
 }

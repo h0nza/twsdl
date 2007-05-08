@@ -31,7 +31,6 @@ namespace eval ::wsdb::messages::${messageNamespace}::${messageName} \{
 	append script "
 lappend ::wsdb::messages::${messageNamespace}::${messageName}::Parts \"$Part\""
 
-	#log Notice "wsdl::messages::new added $Part to ${messageNamespace}::${messageName}"
     }
 
     return $script
