@@ -1,0 +1,42 @@
+'\"
+'\" (c) 2006 United eWay
+'\" All rights reserved
+'\" Licensed under the New BSD license:
+'\" (http://www.opensource.org/licenses/bsd-license.php)
+'\" Contact: Tom Jackson <tom at junom.com>
+.so man.macros
+
+.TH <ws>return n 0.9 TWiST "TWiST: Tcl Web Services Toolkit"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+wsreturn
+.SH SYNOPSIS
+TWiST is a front-end toolkit for rapidly deploy Tcl procedures as a web service. The simplified API of TWiST consists of only three procedures: \fB<ws>namespace\fR, \fB<ws>proc\fR and \fB<ws>return\fR. The names reflect the underlying Tcl commands.
+
+\fB<ws>return\fR Handles all requests and responses to the TWiST web service.
+.SH SYNTAX
+.PP
+\fB<ws>return \fItclNamespace \fR
+.BE
+.SH DESCRIPTION
+.PP
+The TWiST API enables rapid deployment of Tcl procedures as a web service. Currently TWiST runs as an AOLserver module and uses AOLserver as the HTTP server for request and response. TWiST is non-invasive: the API is used in a Tcl script in the pageroot of the AOLserver. The location of the Tcl script file becomes the address of the web service. In addition, the developer does not have to modify any existing code. The TWiST API is best considered as a configuration of an interface. This allows the interface and the internal API to vary independently and maintains separation between code and configuration.
+
+Once a web service is defined in a Tcl page via the TWiST API, visiting the page with a web browser will return a list of operations available, links to more information for each operation, and a link to the Web Service Description (WSDL) of the web service. The operation links can be followed to display an example SOAP Request to invoke the operation. This link also provides a form which can be used to submit parameter values, invoke the service and display the actual SOAP Request and SOAP Response.
+.PP
+.TP
+\fB<ws>return \fR
+.RS
+
+The only useful value for \fBtclNamespace\fR is one which matches the preceeding calls to \fB<ws>namespace\fR and \fB<ws>proc\fR. This is the final command on a TWiST configuration/deployment page. The behavior of \fB<ws>return\fR depends entirely on the state of the Request including:
+
+   \fB*\fR the HTTP method (GET or POST),
+
+   \fB*\fR query variables during a GET,
+
+   \fB*\fR SOAPAction header during a POST, and 
+
+   \fB*\fR any POSTed data
+
+.RE

@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: API Proposals</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+<div class="title">United eWay tWSDL: API Proposals</div>
+<div class="abstract">The tWSDL API should take into account the overall
+proposed structure outlined in the System Overview. Although the System
+Overview does not show all details, roughly speaking each box, at a minimum,
+will represent a distinct module, or namespace. An exact list of functions
+cannot be arrived at at this stage of development, but certain general 
+considerations can be established. The following discussion will trace the
+steps a developer would take in using the tWSDL API to develop an application.
+
+</div>
+
+<div class="cat">Development of Types
+ <div class="body">
+ <p>I am finding it hard to overstress the importance of types
+ in the WSDL framework. This is especially important to understand for 
+ Tcl programmers who rarely have to deal with types until some bug shows up
+ and forces the issue. But the same can be said of programmers in general. Many
+ many bugs and corresponding developer time can be traced to feeding the
+ wrong data to a function. A Web Service essentially allows a remote user to 
+ invoke functions on a system with data of the user's choice. Even with the best
+ of intentions, it is unwise to accept un-checked data from users.
+ </p>
+ <p>Fortunately WSDL demands the use of XML Schema to define types. At first, XML Schema
+ appears to be difficult and complicated. In actual fact, it is rather easy to
+ explain and use. In explaining it here, I will introduce the expected API for
+ defining types.
+ </p>
+ </div>
+ <div class="cat">Simple Types (simpleType)
+ <div class="point">Every developer is familiar with simple types. From now on,
+ I will refer to any XML Schema type that is simple as a simpleType. This will distinguish
+ it from simple types in other languages. A simpleType is Atomic. Atomic means that a 
+ simpleType cannot be decomposed any further. All XML Schema built in types are simpleTypes.
+ </div>
+ <div class="sidebar" title="XML Schema Built In Types">
+  Examples of simpleTypes
+  <ul>
+   <li>string</li>
+   <li>decimal</li>
+   <li>dateTime</li>
+   <li>integer</li>
+  </ul>
+ </div>
+ <div class="point">
+ XML Schema has an extensive number of 'built-in' types. These built-in types are
+ also called 'primitive' types. The real meaning is that in order to completely 
+ support XML Schema the software package must provide these built-in types so that
+ all other simpleTypes can be constructed from them. An example of the API for 
+ including primitive types is as follows:
+ <pre class="code-example">
+
+proc ::wsdl::types::newPrimitiveType {typeName code description} {
+
+    namespace eval ::wsdl::tcl::$typeName [list variable description "$description"]
+
+    proc ::wsdl::tcl::${typeName}::validate { value } $code
+}
+ 
+ </pre>
+ <p>The top level namespace is <span class="code">::wsdl</span>. This may change,
+ for instance maybe  <span class="code">::twsdl</span> would be better. Below that
+ is the  <span class="code">::wsdl::tcl</span> namespace. I am temporarily using
+ this namespace as an indication that the type checking are based upon tcl types, and are not
+ yet exactly the same as the definition given by XML Schema. Once we have a complete list of
+ primitive types that match XML Schema types, we can move the primitive namespace to something
+ else. However, it will still be possible to create derived types based upon the Tcl types,
+ they will still be primitive in tWSDL, but will require the client to be the tWSDL client. 
+ </p>
+ </div>
+ <div class="point">It will often be the case that a simpleType will be identical to another
+ type except by name. In this case, we need an API which creates the type and uses
+ the built in validation for the original type:
+ <pre class="code-example">
+
+proc ::wsdl::types::addSimpleType {tns typeName {base "tcl::anySimpleType"} } {
+
+    namespace eval ::wsdl::${tns}::${typeName} [list variable base "$base"]
+    
+    proc ::wsdl::${tns}::${typeName}::validate { value } "
+       variable base
+       if {\[::wsdl::\${base}::validate \$value]} { 
+           return 1} else { return 0}"
+
+} 
+ </pre>
+ <p>This API also demonstrates that types have namespaces. (Note that this is different than
+ a Tcl namespace, although we will use the type namespace name as the name of the Tcl namespace
+ for the type.)  The example API puts the type namespace as a child of the
+ <span class="code">::wsdl</span> namespace. It might be necessary to create a separate toplevel
+ for all types. 
+ </p>
+ <p>New simpleTypes can also be derived from other simpleTypes or primitive types. You derive
+ a new simpleType by several means: one is by enumeration and the other is by pattern.
+ <p>
+ <p>Here are example calls of both API:
+ <pre class="code-example">
+
+::wsdl::types::restrictionByEnumeration::new "CreditCardTypeCode" "s:string" {
+
+ "Visa"  "Mastercard"  "AmericanExpress"  "Discover"  "DinersClub" 
+
+}
+
+::wsdl::types::restrictionByPattern::new "guid" "s:string" \
+ {[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}
+ </pre>
+ </div>
+ </div>
+ </div>
+   
+</div>
+
+ </body>
+</html>
