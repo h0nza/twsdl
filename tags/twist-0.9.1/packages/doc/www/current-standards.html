@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL: Current Standards for Web Services</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+<div class="title">United eWay tWSDL: Current Standards for Web Services</div>
+<div class="abstract">
+ Interoperability of Web Services demands standardization. There are many
+ applicable standards in this area. These are outlined below.
+</div>
+
+<div class="cat">
+<a href="http://www.w3.org/TR/wsdl.html">WSDL 1.1: Web Services Description Language</a>
+<div class="body">
+ The abstract of WSDL 1.1 reads as follows:
+ <q class="quote">
+ WSDL is an XML format for describing network services as a set of endpoints
+ operating on messages containing either document-oriented or procedure-oriented
+ information. The operations and messages are described abstractly, and then
+ bound to a concrete network protocol and message format to define an endpoint.
+ Related concrete endpoints are combined into abstract endpoints (services). WSDL
+ is extensible to allow description of endpoints and their messages regardless of
+ what message formats or network protocols are used to communicate, however, the
+ only bindings described in this document describe how to use WSDL in conjunction
+ with SOAP 1.1, HTTP GET/POST, and MIME.
+ </q>
+ Note that our tWSDL application will focus on document-oriented information represented 
+ in XML 1.0 using a SOAP 1.1 envelope and transported via HTTP POST.
+</div>
+</div>
+<div class="cat">
+<a href="http://www.w3.org/TR/REC-xml/">XML 1.0</a>
+| <a href="http://www.w3.org/TR/xmlschema-1/">XML Schema Structures</a>
+| <a href="http://www.w3.org/TR/xmlschema-2/">XML Schema Datatypes</a>
+<div class="body">
+XML 1.0 with XML Schema will be used to represent all WSDL documents and all messages
+exchanged between client and server applications. These standards have the following overall 
+goals:
+ <q class="quote" title="XML 1.0 Abstract">
+ The Extensible Markup Language (XML) is a subset of SGML that is completely described
+ in this document. Its goal is to enable generic SGML to be served, received, and
+ processed on the Web in the way that is now possible with HTML. XML has been designed
+ for ease of implementation and for interoperability with both SGML and HTML.
+ </q>
+ <q class="quote" title="XML Schema: Structures Abstract">
+ XML Schema: Structures specifies the XML Schema definition language, which offers
+ facilities for describing the structure and constraining the contents of XML 1.0 documents,
+ including those which exploit the XML Namespace facility. The schema language, which is
+ itself represented in XML 1.0 and uses namespaces, substantially reconstructs and considerably
+ extends the capabilities found in XML 1.0 document type definitions (DTDs). This specification
+ depends on XML Schema Part 2: Datatypes.
+ </q>
+ <q class="quote" title="XML Schema: Datatypes Abstract">
+ XML Schema: Datatypes is part 2 of the specification of the XML Schema language. It defines
+ facilities for defining datatypes to be used in XML Schemas as well as other XML
+ specifications. The datatype language, which is itself represented in XML 1.0, provides a
+ superset of the capabilities found in XML 1.0 document type definitions (DTDs) for specifying
+ datatypes on elements and attributes.
+ </q>
+</div>
+</div>
+<div class="cat">
+<a href="http://www.w3.org/TR/soap11/">SOAP 1.1: Simple Object Access Protocol</a>
+<div class="body">
+ SOAP 1.1 transport bindings with HTTP will be used.
+ <q class="quote" title="SOAP 1.1 Abstract">
+ SOAP is a lightweight protocol for exchange of information in a decentralized, distributed
+ environment. It is an XML based protocol that consists of three parts: an envelope that defines
+ a framework for describing what is in a message and how to process it, a set of encoding rules
+ for expressing instances of application-defined datatypes, and a convention for representing
+ remote procedure calls and responses. SOAP can potentially be used in combination with a variety
+ of other protocols; however, the only bindings defined in this document describe how to use SOAP
+ in combination with HTTP and HTTP Extension Framework.
+ </q>
+ Note that we will not (initially) be using the remote procedure call type of interaction or SOAP encoding.
+</div>
+</div>
+
+<div class="cat">
+<a href="http://www.ws-i.org/Profiles/BasicProfile-1.0-2004-04-16.html">WS-I: Basic Profile</a>
+<div class="body">
+ WS-I is a set of considerations which promote interoperability between unrelated clients and 
+ servers of web services. Since web services are based upon the many standards listed above,
+ it is essential to define a limitation. The guiding principles of WS-I Basic Profile are as
+ follows:
+ <q class="quote" title="WS-I Basic Profile Guiding Principles">
+ <p>The Profile was developed according to a set of principles that, together, 
+ form the philosophy of the Profile, as it relates to bringing about interoperability. This section
+ documents these guidelines.</p>
+ <dl>
+  <dt>No guarantee of interoperability</dt>
+  <dd>It is impossible to completely guarantee the interoperability of a particular service. However,
+      the Profile does address the most common problems that implementation experience has
+      revealed to date.</dd>
+  <dt>Application semantics</dt>
+  <dd>Although communication of application semantics can be facilitated by the technologies that 
+      comprise the Profile, assuring the common understanding of those semantics is not
+      addressed by it.</dd>
+   <dt>Testability</dt>
+   <dd>When possible, the Profile makes statements that are testable. However, 
+      such testability is not required. Preferably, 
+     testing is achieved in a non-intrusive manner (e.g., examining artifacts "on the wire"). 
+     </dd>
+   <dt>Strength of requirements</dt>
+   <dd>The Profile makes strong requirements (e.g., MUST, MUST NOT) wherever 
+     feasible; if there are legitimate cases where such a requirement cannot be met, 
+     conditional requirements (e.g., SHOULD, SHOULD NOT) are used. Optional and conditional 
+     requirements introduce ambiguity and mismatches between 
+     implementations.</dd>
+   <dt>Restriction vs. relaxation</dt>
+   <dd>When amplifying the requirements of referenced specifications, the Profile may 
+     restrict them, but does not relax them (e.g., change a MUST to a MAY). 
+     </dd>
+
+   <dt>Multiple mechanisms</dt>
+   <dd>If a referenced specification allows multiple mechanisms to be used interchangeably, 
+     the Profile selects those that are well-understood, widely implemented and useful. 
+     Extraneous or underspecified mechanisms and extensions introduce complexity and 
+     therefore reduce interoperability.</dd>
+   <dt>Future compatibility</dt>
+   <dd>When possible, the Profile aligns its requirements with in-progress revisions 
+      to the specifications it references (e.g., SOAP 1.2, WSDL 1.2). This aids implementers 
+     by enabling a graceful transition, and assures that WS-I does not 'fork' from these efforts. 
+     When the Profile cannot 
+     address an issue in a specification it references, this information is communicated to the
+     appropriate body to assure its consideration.</dd>
+   <dt>Compatibility with deployed services</dt>
+   <dd>Backwards compatibility with deployed Web services is not a 
+     goal for the Profile, but due consideration is given to it; the Profile does not introduce
+     a change to the requirements of a referenced specification unless doing so addresses 
+     specific interoperability issues.</dd>
+
+   <dt>Focus on interoperability</dt>
+   <dd>Although there are potentially a number of inconsistencies and design flaws 
+     in the referenced specifications, the Profile only addresses those that affect 
+     interoperability.</dd>
+   <dt>Conformance targets</dt>
+   <dd>Where possible, the Profile places requirements on artifacts (e.g., WSDL 
+     descriptions, SOAP messages) rather than the producing or consuming software's behaviors 
+     or roles. Artifacts are concrete, making them easier to verify and therefore making 
+     conformance easier to understand and less error-prone.</dd>
+   <dt>Lower-layer interoperability</dt>
+   <dd>The Profile speaks to interoperability at the application layer; it assumes that
+      interoperability of lower-layer protocols (e.g., TCP, IP, Ethernet) is adequate and 
+      well-understood. Similarly, statements about application-layer substrate protocols 
+      (e.g., SSL/TLS, HTTP) are only made when there is an issue affecting Web services 
+      specifically; WS-I does not attempt to assure the interoperability of these protocols 
+      as a whole. This assures that WS-I's expertise in and focus on Web services 
+      standards is used effectively.</dd>
+
+  </dl>
+ </q>
+</div>
+
+</div>
+
+<div class="cat">
+<a href="http://www.ws-i.org/Profiles/BasicProfile-1.0-2004-04-16.html#points">Extensibility Points</a>
+<div class="body">
+WSDL Elements which are difficult or impossible to specify and would require out of band communication
+between parties.
+
+</div>
+
+</div>
+
+<div class="cat">
+<a href="http://www.w3.org/TR/xml-infoset/">XML Information Set</a>
+<div class="body">May be used as a model for maintaining data in Tcl. The XML Infoset is an in memory
+ representation of a number of (but not all) facts about an XML document. The missing facts do not affect
+ the semantic meaning of the document, although they may affect the serialized representation. For
+ instance, an XML Infoset only contains the normalized text value of a node. Also an Infoset does
+ not specify whether a node should be represented in a diminished form or as an empty element. 
+</div>
+</div>
+</body>
+</html>

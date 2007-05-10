@@ -1,0 +1,89 @@
+'\"
+'\" (c) 2006 United eWay
+'\" All rights reserved
+'\" Licensed under the New BSD license:
+'\" (http://www.opensource.org/licenses/bsd-license.php)
+'\" Contact: Tom Jackson <tom at junom.com>
+.so man.macros
+
+.TH <ws>proc n 0.5 TWiST "TWiST: Tcl Web Services Toolkit"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+wsproc
+.SH SYNOPSIS
+TWiST is a front-end toolkit for rapidly deploy Tcl procedures as a web service. The simplified API of TWiST consists of only three procedures: \fB<ws>namespace\fR, \fB<ws>proc\fR and \fB<ws>return\fR. The names reflect the underlying Tcl commands.
+
+\fB<ws>proc\fR defines the interface between a Tcl proc and a web service operation.
+.SH SYNTAX
+.PP
+\fB<ws>proc \fIfullyQualifiedProcName args body \fR
+.PP
+\fB<ws>proc \fIfullyQualifiedProcName typedArgsList body \fR ?returns? ?typedReturnList?
+.BE
+.SH DESCRIPTION
+.PP
+The TWiST API enables rapid deployment of Tcl procedures as a web service. Currently TWiST runs as an AOLserver module and uses AOLserver as the HTTP server for request and response. TWiST is non-invasive: the API is used in a Tcl script in the pageroot of the AOLserver. The location of the Tcl script file becomes the address of the web service. In addition, the developer does not have to modify any existing code. The TWiST API is best considered as a configuration of an interface. This allows the interface and the internal API to vary independently and maintains separation between code and configuration.
+
+Once a web service is defined in a Tcl page via the TWiST API, visiting the page with a web browser will return a list of operations available, links to more information for each operation, and a link to the Web Service Description (WSDL) of the web service. The operation links can be followed to display an example SOAP Request to invoke the operation. This link also provides a form which can be used to submit parameter values, invoke the service and display the actual SOAP Request and SOAP Response.
+.PP
+.TP
+\fB<ws>proc \fIfullyQualifiedProcName args body \fR
+.RS
+This form of \fB<ws>proc\fR applies all defaults assumed by TWiST. 
+
+Example procedure and default behavior:
+.RE
+.CS
+
+<ws>proc ::MyWebService::AddNumbers { a b } {
+
+    return [expr $a + $b]
+}
+
+.CE
+.RS
+The above call would create an operation named AddNumbersOperation with and input message named AddNumbersRequest and output message named AddNumbersResponse. The AddNumbersRequest message would have an XML Schema type named tns:AddNumbersRequest, where tns is the XML Namespace prefix which corresponds to the default XML Namespace 'urn:tcl:MyWebService'. The parameters \fBa\fR and \fBb\fR will default to the XML Schema type xsd:string, as will the return type. Since there is no specified structure to the AddNumbersResponse type, the default is an element of
+name ResultString with type xsd:string.
+.RE
+.PP
+\fB<ws>proc \fIfullyQualifiedProcName typedArgsList body returns typedReturnList \fR
+.RS
+This form of \fB<ws>proc\fR applies specified types and names to the message and operation format. Revising the example above, gives a more useful definition and allows TWiST to apply meaningful validation of the input message prior to invocation:
+.RE
+.CS
+
+<ws>proc ::MyWebService::AddNumbers { a:integer b:integer } {
+
+    return [expr $a + $b]
+
+} returns { Sum:integer }
+
+.CE
+.RS
+Before invocation of the AddNumbersOperation, the input message AddNumbersRequest will be validated. In order to pass validation, it must contain both sub-elements \fBa\fR and \fBb\fR, and the contents of these elements must be of type xsd:integer. If the input message doesn't validate, a SOAP fault is returned identifying the fault. The output message is not validated, but this can be performed by the client since the type is available via the WSDL type definition. 
+.RE
+.SH EXAMPLES
+AddNumbers Example:
+.CS
+
+<ws>namespace init ::MyWebService
+
+<ws>proc ::MyWebService::AddNumbers { a:integer b:integer } {
+
+    return [expr $a + $b]
+
+} returns { Sum:integer }
+
+<ws>namespace finalize ::MyWebService
+
+<ws>namespace freeze ::MyWebService
+
+<ws>return ::MyWebService
+
+.CE
+
+.PP
+.SH KEYWORDS
+tclNamespace 
+
