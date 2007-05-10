@@ -89,8 +89,10 @@ proc ::<ws>return {tclNamespace} {
 			set inputMessageSignature [lindex $inputMessageSignature 0]
 		    }
 		    if {$missing == 0 && [llength $missingIndexList] > 0} {
-			# Replace missing elements with emtpy string in case minOccurs = 0 for element
-			lset inputMessageSignature $missingIndexList ""
+			# Replace missing elements with empty string in case minOccurs = 0 for element
+			foreach missingIndex $missingIndexList {
+			    lset inputMessageSignature $missingIndex ""
+			}
 		    }
 		    
 		    <ws>log Debug "<ws>return inputMessageSignature = '$inputMessageSignature'"
