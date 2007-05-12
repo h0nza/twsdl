@@ -52,7 +52,7 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	variable soapActionArray
 	variable soapActionMap
 	variable handleRequest
-	namespace import ::tws::log::log
+	namespace import -force ::tws::log::log
     }
     array set ::wsdb::bindings::${bindingName}::soapActionArray $args
     set ::wsdb::bindings::${bindingName}::soapActionMap $args
