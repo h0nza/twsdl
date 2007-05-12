@@ -4,7 +4,10 @@
 # (http://www.opensource.org/licenses/bsd-license.php)
 # Contact: Tom Jackson <tom at junom.com>
 
-
-ns_ictl package require tdom
+if {$::tws::AOLserver < 4.5} {
+    package require tdom
+} else {
+    ns_ictl package require tdom
+}
 
 

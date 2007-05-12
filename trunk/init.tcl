@@ -27,7 +27,7 @@ if {!([llength [info commands ns_log]] > 0)} {
 	ns_log Notice "TWS:init.tcl: Loaded $nsdLibraryFile"
         # Using AOLserver's libnsd
 	namespace eval ::tws {
-	    variable AOLserver "1"
+	    variable AOLserver [ns_info version]
 	}
     } else {
 	puts "TWS:init.tcl Unable to find libnsd.so at $nsdLibraryFile"
@@ -35,7 +35,7 @@ if {!([llength [info commands ns_log]] > 0)} {
 } else {
     ns_log Notice "TWS:init.tcl ns_log already loaded."
     namespace eval ::tws {
-	variable AOLserver "1"
+	variable AOLserver [ns_info version]
     }
 }
 
