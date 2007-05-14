@@ -1,0 +1,79 @@
+'\"
+'\" (c) 2006 United eWay
+'\" All rights reserved
+'\" Licensed under the New BSD license:
+'\" (http://www.opensource.org/licenses/bsd-license.php)
+'\" Contact: Tom Jackson <tom at junom.com>
+.so man.macros
+
+.TH <ws>element n 0.9 TWiST "TWiST: Tcl Web Services Toolkit"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+wselement \- commands
+.SH SYNOPSIS
+TWiST is a front-end toolkit for rapidly deploy Tcl procedures as a web service. The simplified API of TWiST consists of only three operational procedures: \fB<ws>namespace\fR, \fB<ws>proc\fR and \fB<ws>return\fR. The names reflect the underlying Tcl commands. Type definition procedures include \fB<ws>type\fR and \fB<ws>element\fR.
+
+\fB<ws>element\fR commands allow the construction of complexTypes from existing simpleTypes and complexTypes. In TWiST, complexTypes are structural types composed of an ordered series of elements of previously defined types. XML-Schema Structures defines several varieties of model groups: 'all', 'choice' and 'sequence'. In this case, choice is similar to union for simpleTypes and is not supported. All is similar to an array, and items can appear in any order. All is restricted to either zero or one of each child. Sequence is similar to a list, with multiple children of the same type grouped togeather in the specified order. The basic reason for these differences is to aid the development of optimized software, or to support union data types. TWiST and the underlying tWSDL simplify or relax these requirements when reading and validating, but produce conforming complexTypes. In addition, the 'all' compositor is never used, as it is easily handled as a sequence. 
+.SH SYNTAX
+.PP
+\fB<ws>element exists \fItypeName \fR
+.PP
+\fB<ws>element seq[uence] \fItypeName typeList\fR 
+
+.BE
+.SH DESCRIPTION
+.PP
+TWiST provides several APIs for defining types. All types are based upon built in types as described in XML-Schema Standards. The broad categories are simpleTypes such as integer, float, string, byte, etc. and complexTypes which are array and list type structures which are built up from simpleTypes. 
+
+.PP
+.TP
+\fB<ws>element exists\fR
+.RS
+If the element is already defined, returns 1, else returns 0.
+.RE
+.PP
+\fB<ws>element seq[uence]\fR
+.RS
+Creates a new global complexType composed of a sequence of particles defined in the typeList
+.RE
+.SH NOTES
+Type Definition and Use Example
+.CS
+
+<ws>namespace schema "urn:com:example:stock"
+
+<ws>type simple stock::verbose xsd::boolean
+
+<ws>type simple stock::quote xsd::float
+
+<ws>type enum stock::symbol {MSFT WMT XOM GM F GE}
+
+<ws>type enum stock::trend {-1 0 1} xsd::integer
+
+<ws>type pattern stock::Code {[0-9]{4}} xsd::integer
+
+<ws>element sequence stock::StockResponse {  
+    {Symbol:stock::symbol}
+    {Quote:stock::quote}
+    {DateOfChange:stock::dateOfChange {minOccurs 0}}
+    {Name:stock::name                 {minOccurs 0 nillable no}}
+    {Trend:stock::trend               {minOccurs 0}}
+    {DailyMove:stock::dailyMove       {minOccurs 0}}
+    {LastMove:stock::lastMove         {minOccurs 0}}
+}
+
+<ws>element sequence stock::StockRequest {
+    {Symbol:stock::symbol}
+    {Verbose:stock::verbose {minOccurs 0 default "1"}}
+}
+
+<ws>element sequence stock::StocksRequest {
+    {StockRequest:elements::stock::StockRequest {maxOccurs 4}}
+}
+
+
+.CE
+.PP
+.SH KEYWORDS
+typeName
