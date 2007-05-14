@@ -116,8 +116,24 @@ proc ::<ws>return {tclNamespace} {
 		    set port [<ws>namespace set $tclNamespace port]
 		    set protocol [<ws>namespace set $tclNamespace protocol]
 		    set hostHeader [<ws>namespace set $tclNamespace hostHeader]
+		    # Copy any cookie headers
+		    set cookieList [list]
+		    set headerSet  [ns_conn headers]
+		    set headerSize [ns_set size $headerSet]
+		    for {set i 0} {$i < $headerSize} {incr i} {
+			set headerName [ns_set key $headerSet $i]
+			if {[lsearch -exact {cookie cookie2} [string tolower $headerName]] > -1} {
+			    lappend cookieList "${headerName}: [ns_set value $headerSet $i]"
+			}
+			
+		    }
+		    if {[llength $cookieList]} {
+			set cookies "\n[join $cookieList "\n"]"
+		    } else {
+			set cookies ""
+		    }
 		    set Request "POST $url HTTP/1.1
-Host: $hostHeader
+Host: $hostHeader$cookies
 Content-Type: text/xml; charset=utf-8
 Content-Length: $length
 SOAPAction: \"$SOAPAction\"
