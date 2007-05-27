@@ -1,0 +1,46 @@
+
+Tcl Web Services Toolkit (TWiST): 
+
+Summary:
+
+ TWiST is a front-end toolkit for rapidly exposing Tcl procedures
+ as a web service. The simplified API of TWiST consists of only three
+ procedures: <ws>namespace, <ws>proc and <ws>return. The names reflect
+ the underlying Tcl commands.
+
+
+<ws>namespace: creates a Tcl namespace to maintain variables and group
+ exposed Tcl API into a web service. Like the Tcl namespace command, 
+ <ws>namespace has several sub-commands:
+
+ init: Creates the Tcl namespace and sets up a few namespace variables.
+
+ import: Provides a simple method for adding an existing procedure from
+ another namespace to the web service.
+
+ finalize: Once all procedures have been added to the web service, finalize
+ handles the grouping and binding of the procedures into a web service.
+
+ freeze: Blocks any further modifications to the web service. 
+
+ unfreeze: Unblocks editing of the web service.
+
+ set: either sets of returns the value of a web service variable.
+
+ lappend: list appends an element to a named web service variable.
+
+ eval: executes the same as namespace eval (unimplemented).
+
+ delete: deletes the namespace and the associated web service (unimplemented).
+
+ 
+<ws>proc: Creates a Tcl procedure and associated web service messages
+ (input and output) and operation within the namespace created with
+ <ws>namespace. <ws>proc is very similar to the Tcl
+ proc command, in addition to creating a procedure, it also allows for
+ typing of the input and output messages. 
+
+
+<ws>return: Handles all requests and responses to the web service.
+
+
