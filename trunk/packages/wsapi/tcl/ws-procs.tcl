@@ -455,7 +455,25 @@ proc ::<ws>proc {
     set inputConversionList [list]
     set outputConversionList [list]
 
+
     <ws>log Debug "<ws>proc procArgsList = '$procArgsList'"
+    
+    if {[llength $procArgsList] == 1
+	&& [llength [lindex $procArgsList 0]] == 1
+    } {
+	# See if this is just the name of a complexType
+	set argTypeNameList [split [lindex $procArgsList {0 0}] ":"]
+	if {[llength $argTypeNameList] == 1} {
+	    set argType [lindex $argTypeNameList 0]
+	    
+	    if {[namespace exists ::wsdb::elements::${xmlPrefix}::${argType}] 
+		&& [info exists ${tclNamespace}::elements($argType)]
+	    } {
+		set procArgsList [lindex [set ${tclNamespace}::elements($argType)] 0]
+		set inputElementName $argType
+	    }
+	}
+    }
 
     foreach argList $procArgsList {
 	<ws>log Debug "<ws>proc argList = '$argList'"
@@ -485,6 +503,23 @@ proc ::<ws>proc {
 	lappend returnList [list ResultString]
 	lappend outputConversionList [list ResultString]
     } else {
+	# See if returnList is just a return Type:
+	if {[llength $returnList] == 1
+	    && [llength [lindex $returnList 0]] == 1
+	} {
+	    # See if this is just the name of a complexType
+	    set returnArgTypeNameList [split [lindex $returnList {0 0}] ":"]
+	    if {[llength $returnArgTypeNameList] == 1} {
+		set returnArgType [lindex $returnArgTypeNameList 0]
+		
+		if {[namespace exists ::wsdb::elements::${xmlPrefix}::${returnArgType}] 
+		    && [info exists ${tclNamespace}::elements($returnArgType)]
+		} {
+		    set returnList [lindex [set ${tclNamespace}::elements($returnArgType)] 0]
+		    set outputElementName $returnArgType
+		}
+	    }
+	}
 
 	foreach returnArg $returnList {
 	    # This Array will remain available returnList length = 1;
@@ -507,19 +542,23 @@ proc ::<ws>proc {
 
     # XML Schema Element Types (complexType):
     # Create input/output element as type to be used for message:
-    set inputElementName ${baseName}Request
+    if {![info exists inputElementName]} {
+	set inputElementName ${baseName}Request
+    }
     <ws>element sequence ${xmlPrefix}:$inputElementName\
 	$procArgsList $inputConversionList;
 
-    set outputElementName ${baseName}Response
+    if {![info exists outputElementName]} {
+	set outputElementName ${baseName}Response
+    }
     <ws>element sequence ${xmlPrefix}:$outputElementName\
 	$returnList $outputConversionList;
    
     # WSDL Messages
-    set inputMessageName ${inputElementName}Msg
+    set inputMessageName ${baseName}RequestMsg
     eval [::wsdl::messages::new $xmlPrefix $inputMessageName $inputElementName]
 
-    set outputMessageName ${outputElementName}Msg
+    set outputMessageName ${baseName}ResponseMsg
     eval [::wsdl::messages::new $xmlPrefix $outputMessageName $outputElementName]
 
     # WSDL Operation

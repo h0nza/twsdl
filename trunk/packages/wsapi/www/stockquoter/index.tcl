@@ -38,14 +38,14 @@
 <ws>doc element stock StockRequest {Defines StockRequest type.
     User supplies NYSE symbol and a verbose flag for additional data.}
 
-<ws>element sequence stock::StocksRequest {
+<ws>element sequence stock::StocksToQuote {
     {Symbol:stockquoter::symbol {maxOccurs 8 default "MSFT"}}
     {Verbose:stockquoter::verbose {minOccurs 0 default "1"}}
 }
 
 <ws>doc element stock StocksRequest {Multiple StockRequest in one document.}
 
-<ws>element sequence stock::StocksResponse {
+<ws>element sequence stock::StocksQuoted {
     {StockResponse:elements::stock::StockResponse {maxOccurs 8}}
 }
 
@@ -82,10 +82,9 @@
     {QuotesDummy:elements::stock::StockResponse {maxOccurs 8}}
 }
 
-
+# Example of using just the complexType name as proc args:
 <ws>proc ::stock::Stocks {
-    {Symbol {maxOccurs 8} }
-    {Verbose {default 0 minOccurs 0} } 
+    StocksToQuote
 } {
 
     set resultList [list]
@@ -93,7 +92,7 @@
 	lappend resultList [Stock $symbol $Verbose]
     }
     return $resultList
-} returns { }
+} returns StocksQuoted
 
 
 <ws>namespace set ::stock showDocument 1
