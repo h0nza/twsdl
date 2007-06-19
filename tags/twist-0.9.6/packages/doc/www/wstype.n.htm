@@ -1,0 +1,335 @@
+<!-- Creator     : groff version 1.18.1 -->
+<!-- CreationDate: Mon Jun 18 15:14:08 2007 -->
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta name="Content-Style" content="text/css">
+<title>&lt;ws&gt;type</title>
+</head>
+<body>
+
+<h1 align=center>&lt;ws&gt;type</h1>
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#SYNTAX">SYNTAX</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#NOTES">NOTES</a><br>
+<a href="#KEYWORDS">KEYWORDS</a><br>
+
+<hr>
+<pre>______________________________________________________________________________
+</pre>
+<a name="NAME"></a>
+<h2>NAME</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>wstype &minus; commands</p>
+</td>
+</table>
+<a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>TWiST is a front-end toolkit for rapidly deploy Tcl
+procedures as a web service. The simplified API of TWiST
+consists of only three operational procedures:
+<b>&lt;ws&gt;namespace</b>, <b>&lt;ws&gt;proc</b> and
+<b>&lt;ws&gt;return</b>. The names reflect the underlying
+Tcl commands. Type definition procedures include
+<b>&lt;ws&gt;type</b> and <b>&lt;ws&gt;element</b>.</p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type</b> commands allow derivation of
+simpleTypes from the built in XML-Schema types. The
+<b>typeName</b> parameter is a combination of the type
+namespace prefix and the type name, for instance
+stock::Symbol or stock:Symbol (the number of colons does not
+affect the result). The subcommand can be abbreviated, with
+optional characters shown in square brackets, as in
+enum[eration].</p>
+</td>
+</table>
+<a name="SYNTAX"></a>
+<h2>SYNTAX</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type exists</b> <i>typeName</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type sim[ple]</b> <i>typeName</i> ?base?</p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type enum[eration]</b> <i>typeName enumList
+?base?</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type pat[tern]</b> <i>typeName pattern
+?base?</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type decimalRest[riction]</b> <i>typeName
+restrictionList ?base?</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type q[uery]</b> <i>typeName</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type valid[ate]</b> <i>typeName
+value</i></p>
+<!-- INDENTATION -->
+<pre>_________________________________________________________________
+</pre>
+</td>
+</table>
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>TWiST provides several APIs for defining types. All types
+are based upon built in types as described in XML-Schema
+Standards. The broad categories are simpleTypes such as
+integer, float, string, byte, etc. and complexTypes which
+are array and list type structures which are built up from
+simpleTypes.</p>
+<!-- INDENTATION -->
+<p>SimpleTypes are defined and derived via the
+&lt;ws&gt;type API. The derivations are called restrictions.
+There are only a few methods of restriction available:
+renaming, enumeration and a regular expression or pattern.
+The current version of TWiST does not support uniuon types
+or list types.</p>
+</td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type exists</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>If the type is already defined, returns 1, else returns
+0.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type sim[ple]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Creates a new type with the new typeName, which is
+validated via the base type code. The effect is to provide
+an additional name for the simple type, or to import the
+type into the current namespace.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type enum[eration]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Creates a type which is restricted to be one of the
+enumerated values, each of which must be of the underlying
+base type.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type pat[tern]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Creates a type with a valuespace defined by a regular
+expression or pattern. The values must also be a valid in
+the base type valuespace.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type decimalRest[riction]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Creates a derived decimal type (a number) using a number
+of facets: The following facets are specified as a
+name-value list: {totalDigits 5 fractionDigits 2}
+<b>minInclusive</b> -- a decimal number defining the low end
+of the restricted range of values. minInclusive is included
+in the range. <b>minExclusive</b> -- a decimal number
+defining the low end of the restricted range of values.
+minExclusive is excluded from the range. <b>maxExclusive</b>
+-- a decimal number defining the high end of the restricted
+range of values. maxExclusive is excluded from the range.
+<b>maxInclusive</b> -- a decimal number defining the high
+end of the restricted range of values. maxExclusive is
+included in the range. <b>totalDigits</b> -- an integer
+limiting the total number of significant digits. Leading and
+trailing zeros are not included in the count.
+<b>fractionDigits</b> -- an integer limiting the total
+number of digits to the right of the decimal point. Trailing
+zeros are not included in the count.</p>
+<!-- INDENTATION -->
+<p>At most only one of the min and one of the max facets can
+be included in the list. MinInclusive must be less than
+maxExclusive, and fractionDigits must be less than
+totalDigits. totalDigits and fractionDigits do not limit the
+lexical representation, which could have more or less digits
+than the canonical form. The canonical form disallows an
+optional leading positive sign (+), and must have at least
+one digit before and after the required decimal point,
+unless the restriction includes zero fractionDigits.</p>
+<!-- INDENTATION -->
+<p>The default base type is xsd::decimal. If a range of
+integers is required, the base type should be xsd::integer.
+Any other numeric type can be used as a base as long as the
+new range is a subset of the base type, otherwise only the
+the base type will trim the range of the derived type, with
+potentially unexpected results.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type q[uery]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Returns a name value list of information about an
+existing type, or the empty string if the type doesn&rsquo;t
+exist.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type valid[ate]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Checks if supplied value is a valid member of the type.
+(unimplimented)</p></td>
+</table>
+<a name="NOTES"></a>
+<h2>NOTES</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>Type Definition and Use Example</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<pre>&lt;ws&gt;namespace schema &quot;urn:com:example:stock&quot;
+
+&lt;ws&gt;type simple stock::verbose xsd::boolean
+
+&lt;ws&gt;type simple stock::quote xsd::float
+
+&lt;ws&gt;type enum stock::symbol {MSFT WMT XOM GM F GE}
+
+&lt;ws&gt;type enum stock::trend {-1 0 1} xsd::integer
+
+&lt;ws&gt;type pattern stock::Code {[0-9]{4}} xsd::integer
+
+&lt;ws&gt;element sequence stock::StockResponse {
+    {Symbol:stock::symbol}
+    {Quote:stock::quote}
+    {DateOfChange:stock::dateOfChange {minOccurs 0}}
+    {Name:stock::name                 {minOccurs 0 nillable no}}
+    {Trend:stock::trend               {minOccurs 0}}
+    {DailyMove:stock::dailyMove       {minOccurs 0}}
+    {LastMove:stock::lastMove         {minOccurs 0}}
+}
+
+&lt;ws&gt;element sequence stock::StockRequest {
+    {Symbol:stock::symbol}
+    {Verbose:stock::verbose {minOccurs 0 default &quot;1&quot;}}
+}
+
+&lt;ws&gt;element sequence stock::StocksRequest {
+    {StockRequest:elements::stock::StockRequest {maxOccurs 4}}
+}
+
+</pre>
+</td>
+</table>
+<a name="KEYWORDS"></a>
+<h2>KEYWORDS</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>typeName</p>
+</td>
+</table>
+<hr>
+</body>
+</html>

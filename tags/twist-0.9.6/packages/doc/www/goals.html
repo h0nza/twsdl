@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: Goals</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+</head>
+<body>
+ <div class="title">United eWay tWSDL Plan: Goals</div>
+<div class="abstract">
+    <p>Web Services have emerged as an important method of interaction
+    between computer services. In the distant past such interactions were
+    limited to large corporations by the high cost of implimenting EDI.
+    The development of XML then SOAP allowed for easier access to legacy
+    systems, something called 'loose coupling'. The early systems are 
+    characterized as essentially procedures wrapped for transport in XML,
+    and development efforts were focused upon methods of automatically
+    wrapping existing API calls and exposing them to clients across a 
+    network.</p?
+    <p>The most recent advances have moved beyond this initial idea. 
+    Most likely this move was initiated by changes to XML itself. XML has
+    developed a very sophisticated typing system known as XML Schema. The
+    terminology is analogous to the term in the field of SQL database. Using
+    XML Schema Language, developers can create something know as a complex type.
+    Additionally XML was extended to allow namespaces, an important development
+    for combining elements and types from various sources.
+    </p>
+    <p>Web Services Description Language is dependent completely upon the useage of
+    XML Schema. The WSDL file itself is defined through the use of XML Schema. The
+    types of each message are also types defined by using XML Schema. WSDL does not
+    require the messages themselves to be transmitted as XML, however XML Schema is
+    a well constructed system for building types and therefore can form a useful 
+    format for message typing, construction, exchange and validation.
+    </p>
+</div>
+
+
+<div class="cat" >Goal 1: Well Typed Interactions Between Client and Server
+ <div class="body">
+  For successful client/server interaction, both parties must know how to construct
+  valid messages. A message is more than a list of parameters. In fact, our target
+  WSDL payload will be an XML document. These message documents have well defined types.
+  The first activity in building a service is to list the types of messages which will
+  be exchanged. tWSDL should provide methods to quickly define types and associate these
+  types with messages. 
+
+ </div>
+</div>
+<div class="cat" >Goal 2: Construction of valid WSDL Files and Messages. 
+ <div class="body">Given a collection of message types and a few other pieces of information
+ it should be possible to write a valid WSDL file defining the service in all particulars.
+ 
+
+
+ </div>
+</div>
+<div class="cat" >Goal 3: Exchange of Request and Response Messages.
+ <div class="body">A &nbsp; specific WSDL file defines how client and server interact
+ over a network to exchange messages. The tWSDL package should handle the details
+ of this exchange with minimum input from the client. Clients should only be required
+ to know the published location of the WSDL describing the service to genereate a useful
+ client API. Client should only be required to call API procedures with the minimum data 
+ needed to construct the client message and process the server response. 
+
+
+ </div>
+</div>
+
+<div class="cat" >Goal 4: Document Level Validation. 
+ <div class="body">Document level validation provides the most immediate and 
+ comprehensive feedback possible to both the client and server. 
+
+
+ </div>
+</div>
+
+<div class="cat" >Goal 5: Maximal Error Detection and Reporting. 
+ <div class="body">The validation system can only guarantee that messages fit
+ the general datatype. It is possible that backend systems, such as a RDB will have
+ uniqueness or other constraints which cannot be checked prior to an attempt to 
+ invoke the service. However, it should be possible to check that each document, as
+ received is correct according to the defined type. In the event that there is an
+ error, the system should be able to report with specific details which will allow
+ the server or client to determine the location of problem. In XML Schema there are
+ simple types and complex types. Simple types are used to describe atomic values 
+ such as an integer, a string, a boolean. Complex types are composed in various ways 
+ from simple types. Error message should be able to identify the exact type which 
+ was in error, the test which failed and possibly the incorrect value or other
+ information.
+ 
+ </div>
+</div>
+
+<div class="cat" >
+ <div class="body">
+
+ </div>
+</div>
+
+<div class="cat" >
+ <div class="body">
+
+ </div>
+</div>
+
+<div class="cat" >
+ <div class="body">
+
+ </div>
+</div>
+
+
+</body>
+</html>

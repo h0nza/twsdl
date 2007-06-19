@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: StockQuoter Example</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+
+<div class="title">United eWay tWSDL:  StockQuoter Example</div>
+ <div class="abstract">The following is a concise example of how a
+ developer would create a Web Service based upon a Tcl API, and how
+ a client would use interact with that service. 
+ 
+ </div>
+
+
+<div class="cat">Candidate API: Stock Quote Application
+ <div class="body">We will model a simple API which takes one or two
+ parameters and returns a list of values.
+
+ <p>StockQuoter Procedures</p>
+ <pre class="code-example" title="StockQuoter Tcl API (stockQuoter-procs.tcl)">
+
+# stockQuoter-procs.tcl
+
+# The namespace alias will be stockquoter:
+set sqns "stockquoter"
+
+#### Simple Types
+
+# Trade Symbol
+::wsdl::types::simpleType::restrictByEnumeration $sqns symbol tcl::string {MSFT WMT XOM GM F GE }
+
+# Verbose
+::wsdl::types::simpleType::new $sqns  verbose tcl::boolean
+
+# Quote
+::wsdl::types::simpleType::new $sqns quote tcl::double  
+
+# Timestamp
+::wsdl::types::simpleType::new $sqns dateOfChange tcl::dateTime 
+
+# Trend
+::wsdl::types::simpleType::restrictByEnumeration $sqns trend tcl::integer {-1 0 1}
+
+# DailyMove
+::wsdl::types::simpleType::new $sqns dailyMove tcl::double
+
+# LastMove
+::wsdl::types::simpleType::new $sqns lastMove tcl::double
+
+# Name 
+::wsdl::types::simpleType::new $sqns name tcl::string
+
+#### Elements (complexTypes):
+# Note that the command returns a script. eval executes it.
+eval [::wsdl::elements::modelGroup::sequence::new $sqns StockRequest {
+  {Symbol  stockquoter::symbol}
+  {Verbose stockquoter::verbose 1}}]
+	  
+
+eval [::wsdl::elements::modelGroup::sequence::new $sqns StockQuote {
+  {Symbol       stockquoter::symbol          }
+  {Quote        stockquoter::quote           }
+  {DateOfChange stockquoter::dateOfChange 0  }
+  {Name         stockquoter::name         0  }
+  {Trend        stockquoter::trend        0  }
+  {DailyMove    stockquoter::dailyMove    0  }
+  {LastMove     stockquoter::lastMove     0  }
+}]
+
+#### Messages:
+eval [::wsdl::messages::new $sqns StockRequest StockRequest]
+eval [::wsdl::messages::new $sqns StockQuote StockQuote]
+
+
+#### Operations:
+eval [::wsdl::operations::new $sqns StockQuoteOperation {::sq::mystockquote {Symbol Value Verbose Value}} \
+	  {input StockRequest} {output StockQuote}]
+ 
+#### PortTypes:
+::wsdl::portTypes::new $sqns StockQuotePortType {StockQuoteOperation}
+
+#### Bindings (SOAP to Operations):
+::wsdl::bindings::soap::documentLiteral::new $sqns StockQuotePortType \
+    StockQuoteSoapBind \
+    http://stockquoter.com/StockQuote StockQuoteOperation
+
+#### Bindings (Port to PortType):
+::wsdl::ports::new StockQuotePort StockQuoteSoapBind "/StockQuote"
+
+#### Services:
+::wsdl::services::new StockQuoteService {StockQuotePort}
+
+
+
+# Example Wrapped Tcl API:
+
+namespace eval ::sq { }
+
+
+proc ::sq::mystockquote { symbol {verbose 1} } {
+
+    set StockValue [format %0.2f [expr 25.00 + [ns_rand 4].[format %0.2d [ns_rand 99]]]]
+    if {$verbose} {
+	return [list $symbol $StockValue 2006-04-11T00:00:00Z Microsoft 1 0.75 0.10]
+    } else {
+	return [list $symbol $StockValue]
+    }
+}
+
+
+ </pre>
+ 
+ <p>StockQuoter Initialization</p>
+ <pre class="code-example" title="StockQuoter Tcl API (stockQuoter-init.tcl)">
+
+# stockQuoter-init.tcl
+
+#### Server: 
+::wsdl::server::new StockQuoter "http://stockquoter.com/stockquoter" {StockQuoteService}
+
+#### Configure Host header to Server:
+set ::wsdb::servers::StockQuoter::hostHeaderNames [list "maria:8080" "192.168.1.108:8080"]
+
+#### Listen for requests:
+::wsdl::server::listen StockQuoter
+
+ </pre>
+
+ <p>The above code will add a service to the tWSDL DB database. When the AOLserver
+ instance is restarted, the tWSDL Core will start the web service.</p>
+ <p>Once started, the tWSDL client can access the WSDL and generate the Client API.</p>
+ <p>The following is example code for this process:
+ <p class="warning">Client code has not been written yet. (Aug. 31, 2006)</p>
+ <pre class="code-example" title="StockQuoter Client API">
+
+# Assuming library code is loaded, prefer that the following 
+# code could be run from a Tcl command line until indicated.
+
+set wsdl_file_url "http://stockquoter.com/stockquoter.wsdl"
+set wsdlService "StockQuoteService"
+set serviceNamespace "::myStockQuoteService"
+
+# getURL returns the content of the requested url
+set wsdl_file [::wsdl::http::getURL $wsdl_file_url]
+
+# validate WSDL and write Client API
+::wsdl::client::new $serviceNamespace $wsdl_file
+
+# list available Services:
+::wsdl::client::services 
+{::myStockQuoteService}
+#(returns ::myStockQuoteService and any others available as tcl list)
+
+# list operations for StockQuoteService:
+::wsdl::client::operations ::myStockQuoteService
+{StockQuoteOperation}
+
+# show operation signature:
+::wsdl::client::signature ::myStockQuoteService StockQuoteOperation
+{::myStockQuoteService::StockQuoteOperation {StockRequest} {StockQuote}}
+
+# show input message signature:
+::wsdl::client::signature ::myStockQuoteService StockRequest
+{::myStockQuoteService::StockRequest {Symbol Verbose} {StockRequest}}
+
+# show output message signature:
+::wsdl::client::signature ::myStockQuoteService StockQuote
+{::myStockQuoteService::StockQuote {StockQuote} {Symbol Quote DateOfChange Name Trend DailyMove LastMove}}
+
+
+## The following is what would end up in an actual application (once the client API
+## is created. 
+
+# Invoke Service and get Quote
+
+set stockRequest [::myStockQuoteService::StockRequest "MSFT" "1"]
+set stockQuote   [::myStockQuoteService::StockQuoteOperation $stockRequest]
+
+set QuoteList    [::myStockQuoteService::StockQuote $stockQuote]
+
+# maybe ns_return??
+puts $QuoteList 
+
+{MSFT 27.04 2006-04-11T00:00:00Z Microsoft 0 0.00 0.10}
+
+
+
+ </pre>
+
+<p>Notice that we cannot simply feed in the Symbol and Verbose flag from and
+automatically generated API to invoke the service. The Request Message must be
+generated first. There should be one API for each type (global, message, operation, etc.)
+so that complex types can be constructed and sent, and/or received and decomposed.</p>
+
+<p>However, also note that this is a simple example. There will likely be cases where
+something other than a list is needed, so the API above is not complete.</p>
+
+<p>A&nbsp; more complete application would likely validate the input values prior to 
+creating the request, or possibly validate the stockQuote document once it is constructed.</p>
+
+ </div>
+</div>
+</body>
+</html>

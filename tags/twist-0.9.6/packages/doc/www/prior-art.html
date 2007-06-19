@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>United eWay tWSDL Plan: Prior Art</title>
+  <link rel="stylesheet" href="twsdl.css" type="text/css" >
+  </head>
+
+  <body>
+    <div class="title">United eWay tWSDL Plan: Prior Art</div>
+<div class="abstract">
+    <p>Before embarking on a new software project it is important to 
+    consider prior projects covering the same or similar functionality.
+    The immediate ancestor of Web Services is SOAP. Within WSDL, SOAP is 
+    considered as a wrapper and transport; therefore WSDL is much broader than a 
+    software package which provides SOAP services.  </p>
+
+    <p>Most software projects which are more than a year old (prior to March 2005),
+    are extensions of SOAP projects. In particular they are extensions of SOAP-RPC.
+    </p>
+</div>
+
+<div class="cat" ><a href="http://openacs.org/wiki/Web Services">OpenACS & Tcl Projects</a>
+<div class="body">
+ Packages with a Tcl API are most revelant to the current project. Analysis of such projects
+ has the potential to reveal strengths and limitations in Tcl as a language and in the community of
+ programmers and users of Tcl software. Without singling out a particular package from those listed
+ in the above link, several broad observations can be noted:
+ <div class="quote">
+  <div class="point">
+      Both Tcl and AOLserver have support for UTF-8 and both are easy to extend in
+      functionality using both Tcl scripting and procedures written in C (for speed
+      or as a wrapper for an available library). Both Tcl and AOLserver have well 
+      tested support for threads, and AOLserver offers advanced application server
+      functionality.</div>
+  <div class="point">
+      Tcl is a weakly typed language. By that I mean that data elements are stored as strings
+      until it is necessary for the data to be used in a particular format. Although
+      Tcl provides introspection as to procedure names and definitions and variable names
+      and values, it is impossible to derive type information for either inputs or outputs.
+      It is possible via introspection to get the name of Tcl procedure parameters and their
+      default values.</div>
+  <div class="point">
+      Prior Tcl packages have focused mostly on either client or server. Little work has gone into
+      providing a solution for both ends of a conversation.  
+  </div>
+  <div class="point">
+      Prior Tcl packages have focused on SOAP-RPC style interactions. This type of service is 
+      characterized by a client supplying one or more inputs as a list of named elements, and 
+      receiving back from the server one or more outputs as a list of named elements. The type 
+      of interaction is essentially identical to a procedure call in Tcl, although procedure
+      calls in Tcl are positional.
+  </div>
+  <div class="point">
+      All prior Tcl packages have used either tDOM or tclDOM to process incoming XML fragments or
+      documents. Some have used these packages to build up an XML document and to serialize
+      the finished document. tDOM appears to be the most stable and thread friendly package.
+      Neither tDOM nor tclDOM can validate a document using XML Schema. I have not investigated
+      the extent of DTD validation.
+  </div>
+  <div class="point">
+      None of the available  Tcl packages have implimented validation of either outgoing
+      or incoming documents or element values. Some packages have partially addressed validation
+      of elements, but in most cases errors are not caught until some point far removed from the
+      web service layer.
+  </div>
+  <div class="point">
+      None of the available Tcl packages are able to understand or process a WSDL file.
+  </div>
+  <div class="point">
+      OpenACS projects have additional un-necessary overhead (layers) making it impossible to 
+      utilize their functionality without installing OpenACS, or alternatively making it
+      timeconsuming to extract the functionality from these projects. 
+  </div>
+  <div class="point">
+      
+
+
+  </div>
+ </div>
+</div>
+
+
+</div>
+
+
+
+
+<div class="cat"><a href="http://aspn.activestate.com/ASPN/WebServices/SWSAPI">Simple Web Services API</a>
+ <div class="body">
+ Simple Web Services API is an initiative by Active State to create a cross programming language API for
+ handling web services. Probably the most important points with regard to this initiative is that currently
+ there is no Tcl API, and secondly, it doesn't handle complex types.
+ </div>
+</div>
+
+<div class="cat" >
+ <a href="http://ws.apache.org/axis/java/user-guide.html#Introduction">Apache Axis</a>
+<div class="body">What is Axis?
+ <q class="quote" title="From Introduction to Axis"> Axis is essentially a <i>SOAP engine</i> -- a framework for constructing SOAP processors
+ such as clients, servers, gateways, etc. The current version of Axis is written in Java, but a
+ C++ implementation of the client side of Axis is being developed.
+
+
+<p>But Axis isn't just a SOAP engine -- it also includes:</p>
+
+
+<ul>
+  
+<li>a simple stand-alone server,</li>
+  
+<li>a server which plugs into servlet engines such as Tomcat,</li>
+  
+<li>extensive support for the <i>Web Service Description Language (WSDL)</i>,</li>
+
+  
+<li>emitter tooling that generates Java classes from WSDL.</li>
+  
+<li>some sample programs, and</li>
+  
+<li>a tool for monitoring TCP/IP packets.</li>
+
+</ul>
+
+  Axis is the third generation of Apache SOAP
+ </q>
+
+  <p>So Apache Axis is mostly a SOAP Engine. I looked at Apache Axis to see
+  if there was any functionality that we could offload, or to use as a library in tWSDL. 
+  Since tWSDL has a component architecture, there are any number of ways that this could
+  be possible. For instance, a Tcl interface could just hand off everything to an Axis Server.
+  </p>
+  <p>However, a good read through the 
+  <a href="http://ws.apache.org/axis/java/user-guide.html#Introduction">Introduction to Apache Axis</a>
+  leads to the opposite conclusion: tWSDL may end up being a good way to interface a
+  Java application (or any application running on the server) via WSDL!</p>
+  <p>Why? Apache Axis fails in a number of important respects:</p>
+  <ul>
+   <li>Axis is almost entirely focused on RPC style, or uses a wrapped document encoding.</li>
+   <li>Axis maps Java types to XML Schema types using a best guess methodology. For instance
+   base64 encoding is mapped to a byte array, even though there are only 64 valid bytes in
+   base64. Another minor point, you should map XML Schema types to Java types, since the 
+   description language uses XML Schema.
+   <li>Axis provides Zero Type Checking! This means you get zero specificity when an error
+   occurs.</li>
+   <li>Axis requires too much knowledge of WSDL and SOAP, and these details should be mostly
+   transparent to the developer.</li>
+   <li>Axis (or the developers of Axis) are confused about what a WSDL Binding represents.
+   That confusion is that the binding (in this case SOAP) is the most
+   important part of WSDL. </li>
+  </ul>
+
+</div>
+
+<div class="abstract">
+  <p>WSDL moves far beyond SOAP by defining an abstract, language neutral interface to
+  an application. This definition allows for type definition and type checking prior to
+  application invocation. In addition, this new functionality reduces the complexity of
+  the protocol to which it is bound. The protocol can now deal with transport issues and
+  not with encoding details. On the client side, WSDL provides a short path to a functional
+  set of API to interact with the WSDL Application, again providing features such as type
+  checking, error handling, and of course message construction and transport. Client
+  side programming will feel very much like a using a Database API.</p>
+
+
+</div>
+
+
+</body>
+</html>
