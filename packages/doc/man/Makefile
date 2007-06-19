@@ -19,3 +19,5 @@ all:
 	$(INSTMAN) -h wstype.n ../www
 	$(INSTMAN) wselement.n ../www
 	$(INSTMAN) -h wselement.n ../www
+	$(INSTMAN) TWiST-Configuration.n ../www
+	$(INSTMAN) -h TWiST-Configuration.n ../www

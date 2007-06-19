@@ -628,6 +628,17 @@ proc ::<ws>type {
 		$name $base $pattern
 	    set ${tclNamespace}::types($name) [list base $base pattern $pattern]
 	}
+	"decimalRest*" {
+	    set restrictionList [lindex $args 0]
+	    set base        [lindex $args 1]
+	    if {"$base" eq ""} {
+		set base "xsd::decimal"
+	    }
+	    ::wsdl::types::simpleType::restrictDecimal $tnsAlias \
+		$name $base $restrictionList
+	    set ${tclNamespace}::types($name) [list base $base restrictionList $restrictionList]
+
+	}
 	"q*" {
 	    if {[<ws>type exists $typeName]} {
 		return [set ${tclNamespace}::types($name)]

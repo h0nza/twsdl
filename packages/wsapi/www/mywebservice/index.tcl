@@ -22,8 +22,7 @@ namespace eval ::someothernamespace {
 } returns {A:string B:string C:string}
 
 # Derive a simpleType via enumeration:
-::wsdl::types::simpleType::restrictByEnumeration mywebservice \
-    symbol xsd::string {MSFT WMT XOM GM F GE }
+<ws>type enumeration mywebservice::symbol {MSFT WMT XOM GM F GE }
 
 <ws>proc ::mywebservice::EchoSymbol {
     {Symbol:mywebservice::symbol}
@@ -32,8 +31,7 @@ namespace eval ::someothernamespace {
 } returns {Symbol:mywebservice::symbol}
 
 # Derive a simpleType via pattern (regular expression):
-::wsdl::types::simpleType::restrictByPattern mywebservice \
-    code xsd::integer {[0-9]{4}}
+<ws>type pattern mywebservice::code {[0-9]{4}} xsd::integer
 
 <ws>proc ::mywebservice::EchoCode {
     {Code:mywebservice::code} 
@@ -78,6 +76,46 @@ namespace eval ::someothernamespace {
 <ws>namespace import ::mywebservice ::someothernamespace::hello returns {Yeah}
 <ws>namespace import ::mywebservice ::someothernamespace::helloWorld returns { Say }
 # Code above could be moved to library 
+
+# Try out restriction of decimal values
+<ws>type decimalRestriction mywebservice::Byte {minInclusive -127 maxInclusive 127} xsd::integer
+<ws>type decimalRestriction mywebservice::TestDecimal {minExclusive -321.01 maxInclusive 456.78 totalDigits 5 fractionDigits 2}
+
+<ws>element sequence mywebservice::TestDecimalValueResponse {
+    {StringToTest}
+    {IsTestDecimal:boolean}
+    {CanonicalValue:mywebservice::TestDecimal {minOccurs 0}}
+    {ErrorString}
+}
+
+<ws>proc ::mywebservice::EchoByte {
+    ByteAsIntegerIn:mywebservice::Byte
+} {
+
+    return [list $ByteAsIntegerIn]
+
+} returns {ByteAsIntegerOut:mywebservice::Byte} 
+
+
+# Example of using decimal validation proc to create canonical form
+# and show error messages during validation failure.
+<ws>proc ::mywebservice::TestDecimalValue {
+    StringToTest
+} {
+
+    set IsTestDecimal [::wsdb::types::mywebservice::TestDecimal::validate $StringToTest canonList errorList]
+
+    if {$IsTestDecimal} {
+	set CanonicalValue [join $canonList ""]
+	set ErrorString "No Error"
+    } else {
+	set CanonicalValue ""
+	set ErrorString [join $errorList]
+    }
+
+    return [list $StringToTest $IsTestDecimal $CanonicalValue $ErrorString]
+
+} returns {TestDecimalValueResponse}
 
 # Code below is required to be on this page:
 # service address will be url of this page.
