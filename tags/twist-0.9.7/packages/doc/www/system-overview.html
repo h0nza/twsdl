@@ -1,0 +1,357 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: System Overview</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+<style>
+
+table {
+  border-collapse: inherit;
+}
+
+.client {
+  background-color: #FCC;
+  text-align: center;
+} 
+
+.server {
+  background-color: #ACC;
+  text-align: center;
+} 
+
+.universe {
+  border-collapse: collapse;
+}
+
+.server .instance {
+  background-color: #ABB;
+}
+
+.client .instance {
+  background-color: #FBB;
+}
+
+.server .core {
+  background-color: #BCC;
+}
+
+.client .core {
+  background-color: #FDD;
+}
+
+tr.core:hover {
+  border-style: dashed;
+  border-color: #F00;
+}
+
+tr.instance:hover {
+  border-style: dashed;
+  border-color: #F00;
+}
+
+tr.application:hover {
+  border-style: dashed;
+  border-color: #F00;
+}
+
+.client td.instance:hover {
+  border-style: dashed;
+  background-color: #F66;
+}
+
+.server td.instance:hover {
+  border-style: dashed;
+  background-color: #6CC;
+}
+
+caption { caption-side: bottom; 
+          width: auto;
+          text-align: center;
+}
+
+
+</style>
+</head>
+<body>
+ <div class="title">United eWay tWSDL Plan: System Overview</div>
+<div class="abstract">Why do we need a system such as tWSDL will provide? Let me
+ build up the rational for a system, starting with the current situation.
+</div>
+
+
+<div class="cat" >tWSDL Server API
+ <div class="body"><p></p>
+ <div class="figure">
+ <table class="universe" cellspacing="0" cellpadding="0">
+  <tr><td>
+  <table border="1" cellspacing="0" cellpadding="0" >
+  <caption>tWSDL Server</caption>
+   <tr>
+    <td width="75" class="client">Client</td>
+    <td><img src="blank.gif" height="350" width="100" border="0"></td>
+
+    <td  class="server">
+     <table cellspacing="0" cellpadding="2" border="1" class="server">
+      <tr height="50" class="instance">
+       <td>HTTP Doc</td> 
+       <td>SOAP Doc</td> 
+       <td>TYPE Doc</td> 
+       <td>TYPES</td> 
+       <td>WRAP API</td>
+       <!-- <td rowspan="5">x</td>  -->
+      </tr>
+      <tr class="application"> 
+       <td colspan="2">Protocol Checker</td> 
+       <td colspan="2">Type Checker</td> 
+       <td>INVOKER</td> 
+      </tr>
+      <tr height="40" class="core">
+       <td colspan="5">tWSDL Core API &amp; tWSDL DB</td>    
+      </tr>
+      <tr>
+       <td colspan="2" class="instance">Protocol Server</td> 
+       <td colspan="2">Typer</td> 
+       <td>WRAPPER</td>
+      </tr>
+      <tr height="200">
+       <td colspan="4">AOLserver</td> 
+       <td>Tcl API</td>   
+      </tr>
+
+     </table>
+    </td>
+   </tr>
+  </table>
+  </td></tr>
+  </table>
+  <p>
+ </div>
+ </div>
+</div>
+
+<div class="cat" ><a name="core">tWSDL Core Components
+ <div class="body">
+<div class="sidebar" title="Graphic Model Explanation">
+ <p>
+ The above figure illustrates the relationship between various components
+ which will make up the tWSDL System. A graphic is hardly a model of a
+ software application, but we can use it as a partial representation, which
+ can be used as a reminder of how the system will work. Before going into an
+ explaination of the parts, let me explain how the graphic represents the 
+ relationship between the parts.
+ </p>
+ <p>Overall, the figure has three parts along a horizontal line. The parts are
+ the client component, an undefined gap and the server component. The undefined
+ gap merely represents a separation of the client and server. In our specific case
+ this will usually be the internet or some other local network. Beyond the figure
+ on the right and left are user requirements. Users setup servers and use clients. 
+ Users can be people or other applications. The horizontal line (direction) also
+ represents the layers of programs and applications between users. Therefore, each
+ vertical line (the vertical sides of the boxes) represent an interface between 
+ layers. This is usually refered to as an Application Programming Interface or API.
+ </p>
+ <p>Each box represents either a program or data, or both. The central gap is a
+ data box which can be thought of as TCP packets or as HTTP requests and responses.
+ Each vertical line also represents a barrier or boundary between programs and/or
+ data.  
+ </p>
+ <p>Just as each vertical line divides applications or programs which have different
+ functionality, each horizontal line divides parts of a system which offer similar
+ functionality. An horizontal line also represent a division between an application and 
+ the data it uses. 
+ </p>
+ <p>Each pair of horizontal line divides an overall system into channels. These channels
+ work or exist to extend or expose the overall functionality of the system, end to end.
+ </p>
+ <p>Applying these generalities to the figure, notice that the tWSDL Core API & tWSDL DB
+ is represented as a box which extends horizontally from the network interface to
+ the user interface. This implies that this component mediates the entire process and
+ calls on other components to perform various functions. The fact that it touches the 
+ network interface reflects the fact that the Core component will provide an interface
+ into the tWSDL DB database to serve WSDL files and other Web Service details. </p>
+ <p>If you mouse over this component, a dashed red line will replace the solid base
+ of the box. This indicates that information and/or control passes between the 
+ components. However, the sides of the boxes remain solid, which indicates that 
+ information/control MUST pass through the Core and not horizontally between components.
+ So a red dashed line between components represents the way in which information/control
+ flows.
+ </p> 
+</div>
+ <p>The tWSDL Server is an application which will run on top of an instance
+ of AOLserver. AOLserver has a built in Tcl interpreter and an associated
+ Tcl API. In addition, AOLserver allows installation of additional C and
+ Tcl Modules. C Modules are accessed via an associated Tcl API. All
+ exposed Tcl API are available to the tWSDL System.
+ </p>
+ <p>
+ The tWSDL System is composed of several components. There will be a Core
+ tWSDL API which will be used to maintain and manage all aspects of the 
+ System. This Core API will be extensible in several areas for various 
+ reasons.
+ </p>
+ <p>One extension area will be the Wrapper. A Core set of API will allow
+ the developer to wrap any generic function. Extensions of this basic API
+ will make it easier to create Wrappers for specific Tcl API for which 
+ some otherwise necessary information can be derived. For example, a simple
+ Wrapper could assume that all inputs and outputs are strings. Simple
+ introspection would allow for inputs to be named. Another example could
+ be for database procedures where the types can be looked up in a data
+ dictionary. The Wrapper creates a function which takes a representation of
+ an XML document and returns another XML document. The Wrapper is run once
+ to create a tWSDL application. The API generated by the Wrapper will not
+ be a localized API. It should be possible to package and move to another
+ system without the need to rerun the Wrapper. One additional note on Wrapper
+ extensions: it is also possible that an entirely different Wrapper can be
+ used. The only requirement on the Wrapper is that it create a procedure
+ which takes an XML document of the correct type and returns another XML 
+ document of the correct type. In practice, these XML documents (their 
+ in memory representation) will be Tcl namespace references.
+ 
+ </p>
+ <p>The Typer is another potential area for extension. The Core API will
+ cover the allowable methods of creating types. A similar line of reasoning
+ for Wrapper extensions can be applied to the Typer. In both cases, extensions
+ will either make an assumption which limits the amount of data needed, or
+ will be able to find the data needed from another source. 
+ </p>
+ <p>Following WS-I Basic Profile, tWSDL will only support SOAP over HTTP.
+ However, it should be possible to add additional protocols as an extension.
+ </p>
+ <p>Several components will be relatively fixed. These will be the Invoker,
+ the Type Checker and the Protocol Checker. Each of these components will
+ operate under the direction of the tWSDL Core.</p>
+
+ </div>
+</div>
+
+<div class="cat" ><a name="application">A tWSDL Application 
+ <div class="body"><p>
+ Before going into more
+ details about the Server in operation, let's note a few points about how
+ a tWSDL Application will come to life.</p>
+ </p>
+ <p>Using the Core tWSDL API, a developer will write a script which will
+ define the Application. This script should handle the generation of the 
+ desired tWSDL Application. A generated tWSDL Application will consist of
+ several parts:
+ <ul>
+  <li>A WSDL File: A Web Sevice Description defines the public interface
+  of the Web Service. In the case of tWSDL, this file should contain ALL
+  the information needed to use the service. </li>
+  <li>A WRAP API: This consists of a series of API which will be called
+  by the Invoker to perform the Service.</li>
+  <li>New Types: Any types defined in the script will be added to the tWSDL
+  DB. The tWSDL DB will be a collection of all data needed to run all
+  tWSDL Applications in a particular AOLserver installation. On paper the
+  tWSDL DB will just be a series of scripts which load data into memory.
+  The in memory representation will be Tcl Namespaces (without procedures).
+  </li>
+  <li>New Registered Procs (Bindings): A startup file for the Application
+  will use registered procs to 'bind' a service to the required address/port
+  during server startup. The registered procs will invoke the tWSDL Core
+  to handle the request.</li> 
+  <li>Once the Service is loaded, a browsable copy of the WSDL Service 
+  Description and SOAP Message examples will be published. </li>
+
+ </ul>
+ </p>
+
+ </div>
+</div>
+
+<!--
+<div class="cat" ><a name="server-in-action">tWSDL Server in Action
+ <div class="body">
+
+ </div>
+</div>
+-->
+
+<div class="cat" >Layered API Client
+ <div class="body">
+ <div class="figure">
+ <table class="universe" cellspacing="0" cellpadding="0">
+  <tr><td>
+  <table border="1" cellspacing="0" cellpadding="0">
+  <caption>tWSDL Client</caption>
+   <tr>
+    <td class="client">
+     <table cellspacing="0" cellpadding="2" border="1" class="client">
+      <tr height="50" class="instance">
+       <!-- <td rowspan="5">x</td> -->
+       <td rowspan="4">Client API</td>
+       <td>TYPES</td> 
+       <td>TYPE Doc</td> 
+       <td>SOAP Doc</td> 
+       <td>HTTP Doc</td> 
+      </tr>
+      <tr class="application"> 
+
+       <td colspan="2">Type Checker</td> 
+       <td colspan="2">Protocol Checker</td> 
+      </tr>
+      <tr height="40" class="core">
+       <td colspan="4">tWSDL Core API &amp; tWSDL DB</td>    
+      </tr>
+      <tr>
+       <td colspan="2">Typer</td> 
+       <td colspan="2" class="instance">Protocol Client</td> 
+      </tr>
+      <tr height="200">
+       <td>Tcl API</td> 
+       <td colspan="4">AOLserver</td> 
+      </tr>
+
+     </table>
+
+    </td>
+    <td><img src="blank.gif" height="350" width="100" border="0"></td>
+
+    <td width="75"  class="server">
+     Server
+    </td>
+   </tr>
+  </table>
+  </td></tr>
+  </table>
+  
+ </div>
+
+ </div>
+</div>
+
+
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+<div class="cat" >
+ <div class="body">
+ </div>
+</div>
+
+</html>

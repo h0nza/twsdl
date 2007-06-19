@@ -1,0 +1,114 @@
+'\"
+'\" (c) 2006 United eWay
+'\" All rights reserved
+'\" Licensed under the New BSD license:
+'\" (http://www.opensource.org/licenses/bsd-license.php)
+'\" Contact: Tom Jackson <tom at junom.com>
+.so man.macros
+
+.TH <ws>namespace n 0.9 TWiST "TWiST: Tcl Web Services Toolkit"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+wsnamespace \- commands
+.SH SYNOPSIS
+TWiST is a front-end toolkit for rapidly deploy Tcl procedures as a web service. The simplified API of TWiST consists of only three procedures: \fB<ws>namespace\fR, \fB<ws>proc\fR and \fB<ws>return\fR. The names reflect the underlying Tcl commands.
+
+\fB<ws>namespace\fR commands are used to establish and maintain the web service.
+.SH SYNTAX
+.PP
+\fB<ws>namespace init \fItclNamespace \fR
+.PP
+\fB<ws>namespace schema \fItclNamespace targetNamespace\fR
+.PP
+\fB<ws>namespace import \fItclNamespace fullyQualifiedProcName \fR ?returns? ?typedReturnList?
+.PP
+\fB<ws>namespace finalize \fItclNamespace \fR
+.PP
+\fB<ws>namespace freeze \fItclNamespace \fR
+.PP
+\fB<ws>namespace unfreeze \fItclNamespace \fR
+.PP
+\fB<ws>namespace set \fItclNamespace variable \fR ?value?
+.PP
+\fB<ws>namespace lappend \fItclNamespace variable value \fR
+.PP
+\fB<ws>namespace eval \fItclNamespace body \fR
+.PP
+\fB<ws>namespace delete \fItclNamespace \fR
+.BE
+.SH DESCRIPTION
+.PP
+The TWiST API enables rapid deployment of Tcl procedures as a web service. Currently TWiST runs as an AOLserver module and uses AOLserver as the HTTP server for request and response. TWiST is non-invasive: the API is used in a Tcl script in the pageroot of the AOLserver. The location of the Tcl script file becomes the address of the web service. In addition, the developer does not have to modify any existing code. The TWiST API is best considered as a configuration of an interface. This allows the interface and the internal API to vary independently and maintains separation between code and configuration.
+
+Once a web service is defined in a Tcl page via the TWiST API, visiting the page with a web browser will return a list of operations available, links to more information for each operation, and a link to the Web Service Description (WSDL) of the web service. The operation links can be followed to display an example SOAP Request to invoke the operation. This link also provides a form which can be used to submit parameter values, invoke the service and display the actual SOAP Request and SOAP Response.
+.PP
+.TP
+\fB<ws>namespace init\fR
+.RS
+Creates the Tcl namespace and sets up a few namespace variables.
+.RE
+\fB<ws>namespace schema\fR
+.RS
+Initializes the XML-Schema Namespace so types can be defined prior to use by \fB<ws>proc\fR and \fB<ws>namespace import\fR. The targetNamespace is also changed to the provided value. Developers should use this command any time either \fB<ws>type\fR or \fB<ws>element\fR are called prior to calling \fB<ws>proc\fR or \fB<ws>namespace import\fR.
+.RE
+.PP
+\fB<ws>namespace import\fR
+.RS
+Provides a simple method for adding an existing procedure from another namespace to the web service.
+.RE
+.PP
+\fB<ws>namespace finalize\fR
+.RS
+Once all procedures have been added to the web service, finalize handles the grouping and binding of the procedures into a web service.
+.RE
+.PP
+\fB<ws>namespace freeze\fR
+.RS
+Blocks any further modifications to the web service. Use the freeze command after development is complete. The command prevents execution of the defining scripts. However, developers may need to restart AOLserver if types or proc signatures change. Also note that threads will exit within a few minutes, providing the same effect as restarting.
+.RE
+.PP
+\fB<ws>namespace unfreeze\fR
+.RS
+Unblocks editing of the web service.
+.RE
+.PP
+\fB<ws>namespace set\fR
+.RS
+Either sets or returns the value of a web service variable.
+.RE
+.PP
+\fB<ws>namespace lappend\fR
+.RS
+List appends an element to a named web service variable.
+.RE
+.PP
+\fB<ws>namespace eval\fR
+.RS
+Executes the same as namespace eval (unimplemented).
+.RE
+.PP
+\fB<ws>namespace delete\fR
+.RS
+Deletes the namespace and the associated web service (unimplemented).
+.RE
+.SH NOTES
+Hello World! Example:
+.CS
+
+<ws>namespace init ::MyWebService
+
+<ws>proc ::MyWebService::HelloWorld { } {
+    return "Hello World!"
+} returns { Listen }
+
+<ws>namespace finalize ::MyWebService
+
+<ws>namespace freeze ::MyWebService
+
+<ws>return ::MyWebService
+
+.CE
+.PP
+.SH KEYWORDS
+tclNamespace
