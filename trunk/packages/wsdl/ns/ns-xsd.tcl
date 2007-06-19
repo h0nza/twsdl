@@ -40,9 +40,46 @@ proc ::wsdb::types::xsd::dateTime::validate { datetime } {
 ::wsdl::types::simpleType::restrictByEnumeration xsd boolean xsd::string {0 1 true false}
 
 # numeric types
-::wsdl::types::primitiveType::new xsd decimal "return \[string is double -strict \$value]" {faked up decimal type}
+#::wsdl::types::primitiveType::new xsd decimal "return \[string is double -strict \$value]" {faked up decimal type}
+::wsdl::types::primitiveType::new xsd double "return \[string is double -strict \$value]" {faked up double type}
 ::wsdl::types::primitiveType::new xsd float "return \[string is double -strict \$value]" {faked up float type}
-::wsdl::types::primitiveType::new xsd integer "return \[string is integer -strict \$value]" {integer type}
+#::wsdl::types::primitiveType::new xsd integer "return \[string is integer -strict \$value]" {integer type}
+
+# Real Decimal Type using restrict by pattern:
+namespace eval ::wsdb::types::xsd::decimal {
+    variable validate [namespace code validate]
+    variable base xsd::string
+
+    variable pattern {\A([\-+]?)([0-9]*)(?:([\.]?)|([\.])([0-9]+))\Z}
+}
+
+proc ::wsdb::types::xsd::decimal::validateWithInfoArray {
+    value
+    {digitsArrayName dArray}
+} {
+    variable pattern
+    
+    upvar $digitsArrayName DA
+
+    return [regexp $pattern $value DA(all) DA(minus) DA(whole) DA(pointInt) DA(pointReal) DA(fraction)]
+
+}
+
+# Main procedure hides upvar'd array containing digit Array
+proc ::wsdb::types::xsd::decimal::validate {
+    value
+} {
+    return [validateWithInfoArray $value]
+}
+
+
+::wsdl::types::simpleType::restrictDecimal xsd integer tcl::integer {fractionDigits 0}
+::wsdl::types::simpleType::restrictDecimal xsd int tcl::integer {fractionDigits 0} 
+::wsdl::types::simpleType::restrictDecimal xsd nonPositiveInteger xsd::integer {maxInclusive 0}
+::wsdl::types::simpleType::restrictDecimal xsd negativeInteger  xsd::integer {maxInclusive -1}
+::wsdl::types::simpleType::restrictDecimal xsd short xsd::integer {minInclusive -32767 maxInclusive 32767}
+::wsdl::types::simpleType::restrictDecimal xsd byte xsd::integer {minInclusive -127 maxInclusive 127}
+
 
 namespace eval ::wsdb::types::xsd {
 
