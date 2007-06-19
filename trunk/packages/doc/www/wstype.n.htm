@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.18.1 -->
-<!-- CreationDate: Fri Apr 27 14:10:08 2007 -->
+<!-- CreationDate: Mon Jun 18 15:14:08 2007 -->
 <html>
 <head>
 <meta name="generator" content="groff -Thtml, see www.gnu.org">
@@ -28,7 +28,7 @@
 <tr valign="top" align="left">
 <td width="10%"></td>
 <td width="89%">
-<p>&lt;ws&gt;type &minus; commands</p>
+<p>wstype &minus; commands</p>
 </td>
 </table>
 <a name="SYNOPSIS"></a>
@@ -74,6 +74,9 @@ enum[eration].</p>
 <!-- INDENTATION -->
 <p><b>&lt;ws&gt;type pat[tern]</b> <i>typeName pattern
 ?base?</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;type decimalRest[riction]</b> <i>typeName
+restrictionList ?base?</i></p>
 <!-- INDENTATION -->
 <p><b>&lt;ws&gt;type q[uery]</b> <i>typeName</i></p>
 <!-- INDENTATION -->
@@ -179,6 +182,56 @@ base type.</p></td>
 <p>Creates a type with a valuespace defined by a regular
 expression or pattern. The values must also be a valid in
 the base type valuespace.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;type decimalRest[riction]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Creates a derived decimal type (a number) using a number
+of facets: The following facets are specified as a
+name-value list: {totalDigits 5 fractionDigits 2}
+<b>minInclusive</b> -- a decimal number defining the low end
+of the restricted range of values. minInclusive is included
+in the range. <b>minExclusive</b> -- a decimal number
+defining the low end of the restricted range of values.
+minExclusive is excluded from the range. <b>maxExclusive</b>
+-- a decimal number defining the high end of the restricted
+range of values. maxExclusive is excluded from the range.
+<b>maxInclusive</b> -- a decimal number defining the high
+end of the restricted range of values. maxExclusive is
+included in the range. <b>totalDigits</b> -- an integer
+limiting the total number of significant digits. Leading and
+trailing zeros are not included in the count.
+<b>fractionDigits</b> -- an integer limiting the total
+number of digits to the right of the decimal point. Trailing
+zeros are not included in the count.</p>
+<!-- INDENTATION -->
+<p>At most only one of the min and one of the max facets can
+be included in the list. MinInclusive must be less than
+maxExclusive, and fractionDigits must be less than
+totalDigits. totalDigits and fractionDigits do not limit the
+lexical representation, which could have more or less digits
+than the canonical form. The canonical form disallows an
+optional leading positive sign (+), and must have at least
+one digit before and after the required decimal point,
+unless the restriction includes zero fractionDigits.</p>
+<!-- INDENTATION -->
+<p>The default base type is xsd::decimal. If a range of
+integers is required, the base type should be xsd::integer.
+Any other numeric type can be used as a base as long as the
+new range is a subset of the base type, otherwise only the
+the base type will trim the range of the derived type, with
+potentially unexpected results.</p></td>
 </table>
 <!-- INDENTATION -->
 <table width="100%" border=0 rules="none" frame="void"

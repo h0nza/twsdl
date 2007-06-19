@@ -129,8 +129,8 @@ proc ::xml::instance::print { namespace {depth -1} {mixedParent 0} } {
     append output "$namespace"
     
     # NOTE: add code to ensure quoted values
-    if {[array exists ${namespace}::.ATTR]} {
-	foreach {attr val} [array get ${namespace}::.ATTR] {
+    if {[array exists ${namespace}::.ATTRS]} {
+	foreach {attr val} [array get ${namespace}::.ATTRS] {
 	    append output "\n$indent $attr=\"$val\""
 	}
     }
@@ -172,7 +172,7 @@ proc ::xml::instance::print { namespace {depth -1} {mixedParent 0} } {
 proc ::xml::instance::print2 { namespace {depth -1} {mixedParent 0} } {
 
     incr depth
-    set indent [string repeat " " $depth]
+    set indent [string repeat "     " $depth]
     
     set elementName [namespace tail $namespace]
     
@@ -181,23 +181,26 @@ proc ::xml::instance::print2 { namespace {depth -1} {mixedParent 0} } {
     } 
     
     # If parent element isn't mixed, indent
+    if {0} {
     if {!$mixedParent} {
 	append output "\n$indent"
     }
-    
+    }
     append output "$namespace"
     
     foreach .VAR [lsort [info vars ${namespace}::*]] {
 
 	if {[array exists ${.VAR}]} {
 	    foreach .ELEMENT [lsort [array names ${.VAR}]] {
-		append output "\n${indent}${.VAR}(${.ELEMENT}) = '[set ${.VAR}(${.ELEMENT})]'"
+		append output "\n${indent}[namespace tail ${.VAR}(${.ELEMENT})] = '[set ${.VAR}(${.ELEMENT})]'"
 	    }
+	} elseif {[info exists ${.VAR}]} {
+	    append output "\n${indent}[namespace tail ${.VAR}] = '[set ${.VAR}]'"
 	} else {
-	    append output "\n${indent}${.VAR} = '[set ${.VAR}]'"
-	}
+	    append output "\n${indent}[namespace tail ${.VAR}] is undefined"
+        }
     }
-
+    if {0} {
     if {[llength [set ${namespace}::.PARTS]] == 0} {
 	append output "\n"
 	incr depth -1
@@ -205,18 +208,25 @@ proc ::xml::instance::print2 { namespace {depth -1} {mixedParent 0} } {
     } else {
 	append output "\n"
     }
-    
-    # Mixed Content Check: handle whitespace exactly
-    if {[lsearch -glob [set ${namespace}::.PARTS] ".*"] > -1} {
-	set mixedElement 1
+    }
+    if {[info exists ${namespace}::.PARTS]} {
+	append output "\n"
+	# Mixed Content Check: handle whitespace exactly
+	if {[lsearch -glob [set ${namespace}::.PARTS] [list .* * *]] > -1} {
+	    set mixedElement 1
+	} else {
+	    set mixedElement 0
+	}
+	
+	
+	foreach childList [set ${namespace}::.PARTS] {
+	    set child [lindex $childList 2]
+	    if {![string match ".*" "$child"]} {
+		append output "${indent}([::xml::instance::print2 ${namespace}::$child $depth $mixedElement]${indent})\n"
+	    }
+	}
     } else {
 	set mixedElement 0
-    }
-
-    foreach child [set ${namespace}::.PARTS] {
-	if {![string match ".*" "$child"]} {
-	    append output "${indent}([::xml::instance::print2 ${namespace}::$child $depth $mixedElement]${indent})"
-	}
     }
 
     # Avoid appending newline and indent to mixed content
@@ -277,8 +287,8 @@ proc ::xml::instance::toXML { namespace {depth -1} {mixedParent 0} } {
     append output "<$elementName"
 
     # NOTE: add code to ensure quoted values
-    if {[array exists ${namespace}::.ATTR]} {
-	foreach {attr val} [array get ${namespace}::.ATTR] {
+    if {[array exists ${namespace}::.ATTRS]} {
+	foreach {attr val} [array get ${namespace}::.ATTRS] {
 	    append output " $attr=\"$val\""
 	}
     }
@@ -317,7 +327,7 @@ proc ::xml::instance::toXML { namespace {depth -1} {mixedParent 0} } {
 }
 
 
-# TO XML USING NAMESPACE .PRFIX
+# TO XML USING NAMESPACE .PREFIX
 proc ::xml::instance::toXMLNS { tclNamespace {depth -1} {mixedParent 0} } {
 
     incr depth
@@ -485,9 +495,9 @@ proc ::xml::instance::toText { namespace {depth -1} {mixedParent 0} } {
     append output "'''$elementName'"
     
     # NOTE: add code to ensure quoted values
-    if {[array exists ${namespace}::.ATTR]} {
+    if {[array exists ${namespace}::.ATTRS]} {
 	append output "("
-	foreach {attr val} [array get ${namespace}::.ATTR] {
+	foreach {attr val} [array get ${namespace}::.ATTRS] {
 	    append output "'$attr=$val'"
 	}
 	append output ")'"
