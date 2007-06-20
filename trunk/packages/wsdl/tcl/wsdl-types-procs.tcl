@@ -197,18 +197,26 @@ proc ::wsdl::types::simpleType::restrictDecimal {
          set foundFractionDigitsCanon \[string trimright \$dArray(fraction) 0\]
          set foundFractionDigits \[string length \$foundFractionDigitsCanon\]"
 
-    if {[info exists Restrictions(fractionDigits)] && $Restrictions(fractionDigits)} {
-	append scriptBody "
+    if {[info exists Restrictions(fractionDigits)]} {
+	if {$Restrictions(fractionDigits)} {
+	    append scriptBody "
          if \{\$foundFractionDigits == 0\} \{
              set foundFractionDigitsCanon 0
              if \{\".\" eq \"\$dArray(pointReal)\"\} \{ 
                  set foundFractionDigits 1
              \}
-         \}"
+         \}
+         set decimalPointCanon \".\""
+	} else {
+	    append scriptBody "
+         set decimalPointCanon \"\""
+
+	}
     }
+
     append scriptBody "
          set foundDigits \[expr \$wholeDigits + \$foundFractionDigits\]
-         set canonList \[list \$plusMinusCanon \$wholeDigitsCanon . \$foundFractionDigitsCanon \]\n"
+         set canonList \[list \$plusMinusCanon \$wholeDigitsCanon \$decimalPointCanon \$foundFractionDigitsCanon \]\n"
     # totalDigits
     if {$hasTotalDigits || $hasFractionDigits} {
 	if {$hasTotalDigits} {
