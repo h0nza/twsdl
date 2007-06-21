@@ -62,18 +62,19 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 	maxInclusive
 	totalDigits
 	fractionDigits
-	
+	pattern
+	enumeration
     }
 
-    # Need to test for illegal combinations
     array set Restrictions $restrictionList
 
     set restrictionNames [array names Restrictions]
-    # Check supplied values are valid 
-    foreach restrictionName $restrictionNames {
-	if {![::wsdb::types::xsd::decimal::validate $Restrictions($restrictionName)]} {
-	    return -code error "value for $restrictionName is not a decimal number ($Restrictions($restrictionName))"
-	}
+
+    # Check a few structural errors:
+
+    # Only one of pattern and enumeration are allowed
+    if {[info exists Restrictions(pattern)] && [info exists Restrictions(enumeration)]} {
+	return -code error "cannot specify both pattern and enumeration in a single restriction ($tns $typeName)"
     }
     # max and min restrictions: only one of each is allowed
     if {[llength [lsearch -inline -all $restrictionNames [list max*]]] > 1} {
@@ -83,23 +84,77 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 	return -code error "cannot specify both minInclusive and minExclusive to restrict $tns $typeName"
     }
 
+    # Check:
+    # 1. restriction is allowed
+    # 2. supplied numeric values are valid 
+    # 3. check base type conflicts
+
+    set baseNamespace ::wsdb::types::${baseType}::validate
+
+    foreach restrictionName $restrictionNames {
+	if {[lsearch -exact $allowedRestrictions $restrictionName] == -1} {
+	    return -code error "unknown restriction $restrictionName your choices are [join $allowedRestrictions ", "]"
+	}
+	if {[lsearch -exact {pattern enumeration totalDigits fractionDigits} $restrictionName] > -1} {
+	    continue
+	} elseif {![::wsdb::types::xsd::decimal::validate $Restrictions($restrictionName)]} {
+	    return -code error "value for $restrictionName is not a decimal number ($Restrictions($restrictionName))"
+	}
+	    
+	if {![info exists ${baseNamespace}::$restrictionName]} {
+	    continue
+	}
+
+	set baseRestrictionValue [set ${baseNamespace}::$restrictionName]
+	
+	switch -exact -- $restrictionName {
+	    
+	    minInclusive - minExclusive {
+		if {$baseRestrictionValue > $Restrictions($restrictionName)} {
+		    return -code error "value for base $restrictionName\
+ ($baseRestrictionValue) > $tns $typeName $restrictionName ($Restrictions($restrictionName)"
+		}
+	    }
+
+	    maxExclusive - maxInclusive {
+		if {$baseRestrictionValue < $Restrictions($restrictionName)} {
+		    return -code error "value for base $restrictionName\
+ ($baseRestrictionValue) <  $restrictionName ($Restrictions($restrictionName)"
+		}
+		
+	    }
+
+	}
+
+    }
+
     # check that totalDigits and fractionDigits are integers, if exist
     set hasTotalDigits 0
     set hasFractionDigits 0
-    if {[lsearch $restrictionNames totalDigits] > -1} {
+    if {[info exists Restrictions(totalDigits)]} {
 	if {![::wsdb::types::tcl::integer::validate $Restrictions(totalDigits)]} {
 	    return -code error "restriction $tns $typeName totalDigits not integer ($Restrictions(totalDigits))"
 	}
 	set hasTotalDigits 1
 	log Notice "restriction of $tns $typeName assumes parent simpleType includes decimal"
     }
-    if {[lsearch $restrictionNames fractionDigits] > -1} {
+    if {[info exists Restrictions(fractionDigits)]} {
 	if {![::wsdb::types::tcl::integer::validate $Restrictions(fractionDigits)]} {
 	    return -code error "restriction $tns $typeName fractionDigits\
  not integer ($Restrictions(fractionDigits))"
+	} elseif {[info exists ${baseNamespace}::fractionDigits]} {
+	    set baseRestrictionValue [set ${baseNamespace}::fractionDigits]
+	    if {$baseRestrictionValue < $Restrictions(fractionDigits)} {
+		return -code error "fractionDigits ($Restrictions(fractionDigits))\
+ > base fractionDigits ($baseRestrictionValue)"
+	    }
 	}
 	set hasFractionDigits 1
 	log Notice "restriction of $tns $typeName assumes parent simpleType includes decimal"
+    } elseif {[string match "xsd::int*" $baseType]} {
+	set Restrictions(fractionDigits) 0
+	lappend restrictionNames fractionDigits
+	lappend restrictionList fractionDigits 0
     }
 
     # check fractionDigits <= totalDigits
@@ -111,25 +166,59 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     }
 
     # check minInclusive < maxExclusive
-    if {[lsearch $restrictionNames minInclusive] > -1
-	&& [lsearch $restrictionNames maxExclusive] > -1
+    if {[info exists Restrictions(minInclusive)]
+	&& [info exists Restrictions(maxExclusive)]
 	&& !($Restrictions(minInclusive) < $Restrictions(maxExclusive))
     } {
 
 	return -code error "restriction in $tns $typeName error minInclusive\
  ($Restrictions(minInclusive))>= maxExclusive ($Restrictions(maxExclusive))"
 
-    }	
+    }
+    
+    # Check pattern is valid
+    if {[info exists Restrictions(pattern)]} {
+	if {[catch {regexp $Restrictions(pattern) abc} errorMsg]} {
+	    return -code error "failed pattern test on $tns $typeName $errorMsg"
+	}
+	
+    }
+
+    # Check enumeration elements are valid, at least to baseType
+    if {[info exists Restrictions(enumeration)]} {
+	set enumIndex 0
+	foreach enum $Restrictions(enumeration) {
+	    if {![::wsdb::types::${baseType}::validate $enum]} {
+		return -code error "failed enumeration item on $tns $typeName at index $enumIndex value = '$enum' not type $baseType"
+	    }
+	    incr enumIndex
+	}
+    }
+		
+    if {[info exists Restrictions(pattern)] && [info exists Restrictions(enumeration)]} {
+	return -code error "retriction to $tns $typeName cannot use both pattern and enumeration"
+    }
+
+    # All structural requirements are met for restriction of decimal type...
+    log Notice "Looks Okay! Making restricting type $baseType to $tns $typeName"
 
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable base $baseType]
+
+    set restrictionVarScriptList [list]
+    # Add namespace vars for pattern or enumeration
+    foreach restrictionName $restrictionNames {
+	namespace eval ::wsdb::types::${tns}::${typeName} [list variable $restrictionName $Restrictions($restrictionName)]
+	lappend restrictionVarScriptList "    variable $restrictionName"
+    }
+    namespace eval ::wsdb::types::${tns}::${typeName} [list variable decimalPointCanon .]
+
     namespace eval ::wsdb::types::${tns}::${typeName} "
     variable validate \[namespace code \{validate\}\]"
 
-    log Notice "Looks Okay!"
-
     set scriptBody "
     variable base
-    set valid 0
+    variable decimalPointCanon
+[join $restrictionVarScriptList \n]
 
     if \{\"\$errorListVar\" ne \"\"\} \{
         upvar \$errorListVar errorList
@@ -138,11 +227,46 @@ proc ::wsdl::types::simpleType::restrictDecimal {
         upvar \$canonListVar canonList
     \}
 
-    set errorList \[list \$value\]
+    set valid 0
+    set collapsedValue \[string trim \$value\]
+    set errorList \[list \$collapsedValue\]
     set canonList \[list\]
 
+    ::wsdb::types::xsd::decimal::validateWithInfoArray \$collapsedValue dArray
+    set plusMinusCanon \[string trim \$dArray(minus) +\]
+    set wholeDigitsCanon \[string trimleft \$dArray(whole) -+0\]
+    set wholeDigits \[string length \$wholeDigitsCanon\]
+    if \{\$wholeDigits == 0\} \{
+        set wholeDigits 1
+        set wholeDigitsCanon 0
+    \}
+    set foundFractionDigitsCanon \[string trimright \$dArray(fraction) 0\]
+    set foundFractionDigits \[string length \$foundFractionDigitsCanon\]"
+
+
+
+    if {[info exists Restrictions(fractionDigits)]} {
+	if {$Restrictions(fractionDigits)} {
+	    append scriptBody "
+    if \{\$foundFractionDigits == 0\} \{
+        set foundFractionDigitsCanon 0
+        if \{\".\" eq \"\$dArray(pointReal)\"\} \{ 
+            set foundFractionDigits 1
+        \}
+    \}"
+        } else {
+            namespace eval ::wsdb::types::${tns}::${typeName} [list variable decimalPointCanon ""]
+        }
+    }
+
+    append scriptBody "
+    set foundDigits \[expr \$wholeDigits + \$foundFractionDigits\]
+
+    set canonList \[list \$plusMinusCanon \$wholeDigitsCanon \$decimalPointCanon \$foundFractionDigitsCanon\]
+    set canonValue \[join \$canonList \"\"\]
+ 
     while \{1\} \{
-        if \{!\[::wsdb::types::\${base}::validate \"\$value\"\]\} \{
+        if \{!\[::wsdb::types::\${base}::validate \$canonValue\]\} \{
             lappend errorList \"failed base test \$base\" 
             break
         \}"
@@ -150,19 +274,37 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     set skipMax 0
     set skipMin 0
 
+    # pattern
+    if {[info exists Restrictions(pattern)]} {
+	append scriptBody "
+	if \{!\[regexp \$pattern \$value\]\} \{
+            lappend errorList \"failed pattern test using \$pattern\"
+            break
+        \}"
+    }
+
+    # enumeration
+    if {[info exists Restrictions(enumeration)]} {
+	lappend scriptBody "
+        if \{\[lsearch -exact \$enumeration \$value\] > -1\} \{
+            lappend errorList \"failed enumeration test\"
+            break
+        \}" 
+    }
+
     # minInclusive
     if {[info exists Restrictions(minInclusive)]} {
 	append scriptBody "
-        if \{\"\$value\" < $Restrictions(minInclusive)\} \{
-               lappend errorList \"failed minInclusive test ($Restrictions(minInclusive))\"
-               break
-           \}"
+        if \{\$canonValue < $Restrictions(minInclusive)\} \{
+            lappend errorList \"failed minInclusive test ($Restrictions(minInclusive))\"
+            break
+        \}"
 	set skipMin 1
     }
     # minExclusive 
     if {!$skipMin && [info exists Restrictions(minExclusive)]} {
 	append scriptBody "
-        if \{!(\"\$value\" > $Restrictions(minExclusive))\} \{
+        if \{!(\$canonValue > $Restrictions(minExclusive))\} \{
             lappend errorList \"failed minExclusive test ($Restrictions(minExclusive))\"
             break
         \}"
@@ -170,58 +312,24 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     # maxExclusive 
     if {[info exists Restrictions(maxExclusive)]} {
 	append scriptBody "
-        if \{!(\"\$value\" < $Restrictions(maxExclusive))\} \{
+        if \{!(\$canonValue < $Restrictions(maxExclusive))\} \{
             lappend errorList \"failed maxExclusive test ($Restrictions(maxExclusive))\"
             break
         \}"
 	set skipMax 1
     }
-    # MaxInclusive
+    # maxInclusive
     if {!$skipMax && [info exists Restrictions(maxInclusive)]} {
 	append scriptBody "
-        if \{\"\$value\" > $Restrictions(maxInclusive)\} \{
+        if \{\$canonValue > $Restrictions(maxInclusive)\} \{
             lappend errorList \"failed maxInclusive test ($Restrictions(maxInclusive))\"
             break
         \}"
     }
-
-    append scriptBody "
-	 ::wsdb::types::xsd::decimal::validateWithInfoArray \$value dArray
-         set plusMinusCanon \[string trim \$dArray(minus) +\]
-         set wholeDigitsCanon \[string trimleft \$dArray(whole) -+0\]
-         set wholeDigits \[string length \$wholeDigitsCanon\]
-         if \{\$wholeDigits == 0\} \{
-             set wholeDigits 1
-             set wholeDigitsCanon 0
-         \}
-         set foundFractionDigitsCanon \[string trimright \$dArray(fraction) 0\]
-         set foundFractionDigits \[string length \$foundFractionDigitsCanon\]"
-
-    if {[info exists Restrictions(fractionDigits)]} {
-	if {$Restrictions(fractionDigits)} {
-	    append scriptBody "
-         if \{\$foundFractionDigits == 0\} \{
-             set foundFractionDigitsCanon 0
-             if \{\".\" eq \"\$dArray(pointReal)\"\} \{ 
-                 set foundFractionDigits 1
-             \}
-         \}
-         set decimalPointCanon \".\""
-	} else {
-	    append scriptBody "
-         set decimalPointCanon \"\""
-
-	}
-    }
-
-    append scriptBody "
-         set foundDigits \[expr \$wholeDigits + \$foundFractionDigits\]
-         set canonList \[list \$plusMinusCanon \$wholeDigitsCanon \$decimalPointCanon \$foundFractionDigitsCanon \]\n"
     # totalDigits
     if {$hasTotalDigits || $hasFractionDigits} {
 	if {$hasTotalDigits} {
 	    append scriptBody "
-        set totalDigits $Restrictions(totalDigits)
         if \{\$foundDigits > \$totalDigits\} \{
             lappend errorList \"failed foundDigits (\$foundDigits) > totalDigits ($Restrictions(totalDigits))\"
             break
@@ -231,7 +339,6 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 
 	if {$hasFractionDigits} {
             append scriptBody "
-        set fractionDigits $Restrictions(fractionDigits)
         if \{\$foundFractionDigits > \$fractionDigits\} \{
             lappend errorList \"failed foundFractionDigits (\$foundFractionDigits)\
  > fractionDigits ($Restrictions(fractionDigits))\"
@@ -247,9 +354,9 @@ proc ::wsdl::types::simpleType::restrictDecimal {
         break
     \}
 
-    return \$valid"
+    return \$valid\n"
 
-    proc ::wsdb::types::${tns}::${typeName}::validate { value {canonListVar ""} {errorListVar ""} } $scriptBody
+    proc ::wsdb::types::${tns}::${typeName}::validate { value {errorListVar ""} {canonListVar ""} } $scriptBody
 
     ::wsdl::schema::appendSimpleType decimal $tns $typeName $baseType $restrictionList
 }
