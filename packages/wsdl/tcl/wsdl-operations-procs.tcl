@@ -102,7 +102,7 @@ proc ::wsdb::operations::${operationNamespace}::${operationName}::Invoke \{
 \} \{
     variable conversionList$inputDefaultCodeBlock
     ::xml::childElementsAsListWithConversions \$inputXMLNS \$conversionList
-    ::tws::log::log Debug \"Invoking ::wsdb::elements::${operationNamespace}::${outputElement}::new \$outputXMLNS |$operationProc $operationProcArgs|\"
+
     return \[::wsdb::elements::${operationNamespace}::${outputElement}::new \$outputXMLNS \[$operationProc $operationProcArgs\]\]
 \}
 "
