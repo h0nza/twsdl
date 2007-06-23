@@ -10,10 +10,10 @@ namespace eval ::wsdl::types { }
 namespace eval ::wsdl::types::primitiveType { }
 
 namespace eval ::wsdl::types::simpleType {
-
+    
     namespace import ::tws::log::log
 }
- 
+
 namespace eval ::wsdl::types::complexType { }
 
 # addSimpleType, newPrimitiveType and restrictByEnumeration create types
@@ -46,8 +46,167 @@ proc ::wsdl::types::primitiveType::new {tns typeName code description} {
 
     proc ::wsdb::types::${tns}::${typeName}::validate { value } $code
 }
+
+
+
+proc ::wsdl::types::simpleType::restrictString {
+    tns
+    typeName
+    baseType
+    restrictionList
+} {
     
-proc ::wsdl::types::simpleType::decimalToCanonicalForm {} {}
+    set allowedRestrictions {
+	length
+	minLength
+	maxLength
+	pattern
+	whiteSpace
+    }
+    
+    
+    array set Restrictions $restrictionList
+    
+    set restrictionNames [array names Restrictions]
+    
+    # Check a few structural errors:
+    # See <http://www.w3.org/TR/xmlschema-2/#length-coss>
+    # In general, users should not use length with either
+    # minLength or maxLength, as these must correspond to
+    # some prior base type. These will be checked when the
+    # input value undergoes base type validation. 
+    # Resulting code generated may therefore skip
+    # these facets.
+    
+    # whitespace: apparently XML 1.0 requires preserve,
+    # Sooooo... This will be ignored for now, but...
+    # NOTE: numeric values apply collapse (string trim)
+    
+    set baseNamespace ::wsdb::types::${baseType}
+    
+    foreach restrictionName $restrictionNames {
+	if {[lsearch -exact $allowedRestrictions $restrictionName] == -1} {
+	    return -code error "unknown restriction $restrictionName your\
+ choices are [join $allowedRestrictions ", "]"
+	}
+	
+	
+	switch -exact -- $restrictionName {
+	    
+	    length {
+		# TODO: update with more exact integer 
+		if {![string is integer -strict $Restrictions(length)]} {
+		    return -code error "value for length is not an integer"
+		}
+		if {[info exists ${baseNamespace}::length]} {
+		    if {[set ${baseNamespace}::length] != $Restrictions(length)} {
+			return -code error "value for length ($Restrictions(length))\
+ must equal base type length ([set ${baseNamespace}::length])"
+		    }
+		}
+	    }
+	    maxLength {
+		if {![string is integer -strict $Restrictions(maxLength)]} {
+		    return -code error "value for maxLength is not an integer"
+		}
+	    }
+	    minLength {
+		if {![string is integer -strict $Restrictions(minLength)]} {
+		    return -code error "value for minLength is not an integer"
+		}
+	    }
+	    pattern {
+		if {[catch {regexp $Restrictions(pattern) abc} errorMsg]} {
+		    return -code error "failed pattern test on $tns $typeName $errorMsg"
+		}
+	    }
+	    whitespace {
+		if {[lsearch -exact {preserve replace collapse} $Restrictions(whitespace)] == -1} {
+		    return -code error "whitespace must be one of preserve, replace or collapse"
+		}
+	    }
+	}
+    }
+    
+    # InterFacet error
+    if {[info exists Restrictions(minLength)] && [info exists Restrictions(maxLength)]} {
+	if {$Restrictions(minLength) > $Restrictions(maxLength)} {
+	    return -code error "minLength ($Restrictions(minLength)) greater\
+ than maxLength ($Restrictions(maxLength))"
+	}
+    }
+    
+    # All structural requirements are met for restriction of string type...
+    log Notice "Looks Okay! Making restricting type $baseType to $tns $typeName"
+    
+    
+    namespace eval ::wsdb::types::${tns}::${typeName} [list variable base $baseType]
+    
+    set restrictionVarScriptList [list]
+    # Add namespace vars for restrictions
+    foreach restrictionName $restrictionNames {
+	namespace eval ::wsdb::types::${tns}::${typeName} [list variable $restrictionName $Restrictions($restrictionName)]
+	lappend restrictionVarScriptList "    variable $restrictionName"
+    }
+    
+    namespace eval ::wsdb::types::${tns}::${typeName} "
+    variable validate \[namespace code \{validate\}\]"
+    
+    
+    set scriptBody "
+    variable base
+[join $restrictionVarScriptList "\n"]
+
+    if \{\"\$errorListVar\" ne \"\"\} \{
+        upvar \$errorListVar errorList
+    \}
+
+    set valid 0
+    set errorList \[list \$value\]
+ 
+    while \{1\} \{
+        if \{!\[::wsdb::types::\$\{base\}::validate \$value\]\} \{
+            lappend errorList \"failed base test \$base\" 
+            break
+        \}
+        set valueLength \[string length \$value\]"
+    
+    if {[info exists Restrictions(length)]} {
+        append scriptBody "
+        if \{\$valueLength != $Restrictions(length)\} \{
+            lappend errorList \"failed length test foundLength (\$valueLength) != length ($Restrictions(length))\"
+            break
+        \}"
+    }
+    if {[info exists Restrictions(minLength)]} {
+        append scriptBody "
+	if \{\$valueLength < $Restrictions(minLength)\} \{
+            lappend errorList \"failed minLength test foundLength (\$valueLength) < minLength ($Restrictions(minLength))\"
+            break
+        \}"
+    }
+    if {[info exists Restrictions(maxLength)]} {
+        append scriptBody "
+        if \{\$valueLength > $Restrictions(maxLength)\} \{
+            lappend errorList \"failed maxLength test foundLength (\$valueLength) > maxLength ($Restrictions(maxLength))\"
+            break
+        \}"
+     }
+     
+    append scriptBody "
+        set valid 1
+        break
+    \}
+
+    return \$valid\n"
+
+    proc ::wsdb::types::${tns}::${typeName}::validate { value {errorListVar ""} } $scriptBody
+    ::wsdl::schema::appendSimpleType string $tns $typeName $baseType $restrictionList
+
+}
+
+
+
 proc ::wsdl::types::simpleType::restrictDecimal {
     tns
     typeName
@@ -63,7 +222,6 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 	totalDigits
 	fractionDigits
 	pattern
-	enumeration
     }
 
     array set Restrictions $restrictionList
@@ -72,10 +230,6 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 
     # Check a few structural errors:
 
-    # Only one of pattern and enumeration are allowed
-    if {[info exists Restrictions(pattern)] && [info exists Restrictions(enumeration)]} {
-	return -code error "cannot specify both pattern and enumeration in a single restriction ($tns $typeName)"
-    }
     # max and min restrictions: only one of each is allowed
     if {[llength [lsearch -inline -all $restrictionNames [list max*]]] > 1} {
 	return -code error "cannot specify both maxInclusive and maxExclusive to restrict $tns $typeName"
@@ -89,13 +243,13 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     # 2. supplied numeric values are valid 
     # 3. check base type conflicts
 
-    set baseNamespace ::wsdb::types::${baseType}::validate
+    set baseNamespace ::wsdb::types::${baseType}
 
     foreach restrictionName $restrictionNames {
 	if {[lsearch -exact $allowedRestrictions $restrictionName] == -1} {
 	    return -code error "unknown restriction $restrictionName your choices are [join $allowedRestrictions ", "]"
 	}
-	if {[lsearch -exact {pattern enumeration totalDigits fractionDigits} $restrictionName] > -1} {
+	if {[lsearch -exact {pattern totalDigits fractionDigits} $restrictionName] > -1} {
 	    continue
 	} elseif {![::wsdb::types::xsd::decimal::validate $Restrictions($restrictionName)]} {
 	    return -code error "value for $restrictionName is not a decimal number ($Restrictions($restrictionName))"
@@ -131,6 +285,8 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     # check that totalDigits and fractionDigits are integers, if exist
     set hasTotalDigits 0
     set hasFractionDigits 0
+
+    # totalDigits
     if {[info exists Restrictions(totalDigits)]} {
 	if {![::wsdb::types::tcl::integer::validate $Restrictions(totalDigits)]} {
 	    return -code error "restriction $tns $typeName totalDigits not integer ($Restrictions(totalDigits))"
@@ -138,6 +294,7 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 	set hasTotalDigits 1
 	log Notice "restriction of $tns $typeName assumes parent simpleType includes decimal"
     }
+    # fractionDigits
     if {[info exists Restrictions(fractionDigits)]} {
 	if {![::wsdb::types::tcl::integer::validate $Restrictions(fractionDigits)]} {
 	    return -code error "restriction $tns $typeName fractionDigits\
@@ -150,11 +307,32 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 	    }
 	}
 	set hasFractionDigits 1
+	set inheritFractionDigits 0
+
 	log Notice "restriction of $tns $typeName assumes parent simpleType includes decimal"
+    } elseif {[info exists ${baseNamespace}::fractionDigits]} {
+	set Restrictions(fractionDigits) [set ${baseNamespace}::fractionDigits]
+	lappend restrictionNames fractionDigits
+	set hasFractionDigits 1
+	set inheritFractionDigits 1
+	
     } elseif {[string match "xsd::int*" $baseType]} {
-	set Restrictions(fractionDigits) 0
+	set Restriction(fractionDigits) 0
 	lappend restrictionNames fractionDigits
 	lappend restrictionList fractionDigits 0
+	set hasFractionDigits 1
+	set inheritFractionDigits 1
+    }
+    
+    # Setup decimalPointCanon
+    if {$hasFractionDigits} {
+	if {$Restrictions(fractionDigits)} {
+	    set decimalPointCanon "."
+	} else {
+	    set decimalPointCanon ""
+	}
+    } else {
+	set decimalPointCanon "."
     }
 
     # check fractionDigits <= totalDigits
@@ -184,36 +362,39 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 	
     }
 
-    # Check enumeration elements are valid, at least to baseType
-    if {[info exists Restrictions(enumeration)]} {
-	set enumIndex 0
-	foreach enum $Restrictions(enumeration) {
-	    if {![::wsdb::types::${baseType}::validate $enum]} {
-		return -code error "failed enumeration item on $tns $typeName at index $enumIndex value = '$enum' not type $baseType"
-	    }
-	    incr enumIndex
-	}
-    }
-		
-    if {[info exists Restrictions(pattern)] && [info exists Restrictions(enumeration)]} {
-	return -code error "retriction to $tns $typeName cannot use both pattern and enumeration"
-    }
-
     # All structural requirements are met for restriction of decimal type...
     log Notice "Looks Okay! Making restricting type $baseType to $tns $typeName"
 
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable base $baseType]
 
     set restrictionVarScriptList [list]
-    # Add namespace vars for pattern or enumeration
+    # Add namespace vars for restrictions
     foreach restrictionName $restrictionNames {
 	namespace eval ::wsdb::types::${tns}::${typeName} [list variable $restrictionName $Restrictions($restrictionName)]
 	lappend restrictionVarScriptList "    variable $restrictionName"
     }
-    namespace eval ::wsdb::types::${tns}::${typeName} [list variable decimalPointCanon .]
+    namespace eval ::wsdb::types::${tns}::${typeName} [list variable decimalPointCanon $decimalPointCanon]
 
     namespace eval ::wsdb::types::${tns}::${typeName} "
     variable validate \[namespace code \{validate\}\]"
+
+
+    # NOTE: the first validity test is against the baseType. Unfortunately,
+    # this ends up providing less information, since the exact failure is not
+    # available to the validation proc. But! This is okay, because it is likely
+    # that the failed facet does not appear in the schema definition for this
+    # type, but in the base type. So pointing to the failure in the baseType
+    # seems the best solution. 
+
+    # Example TestDecimal  restricts fractionDigits to 2, totalDigits to 5
+    #         TestDecimal2, based upon TestDecimal restricts totalDigits to 4.
+    # 
+    # During restriction, fractionDigits = 2 is copied from TestDecimal, but
+    #  it is not added to the schema definition.
+
+    # A value of 3.041 passed to TestDecimal2::validate will fail the base test,
+    #  but it looks valid, as having only 4 totalDigits. TestDecimal2 inherits
+    #  fractionDigits 2 from TestDecimal. It would fail the 
 
     set scriptBody "
     variable base
@@ -232,41 +413,16 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     set errorList \[list \$collapsedValue\]
     set canonList \[list\]
 
-    ::wsdb::types::xsd::decimal::validateWithInfoArray \$collapsedValue dArray
-    set plusMinusCanon \[string trim \$dArray(minus) +\]
-    set wholeDigitsCanon \[string trimleft \$dArray(whole) -+0\]
-    set wholeDigits \[string length \$wholeDigitsCanon\]
-    if \{\$wholeDigits == 0\} \{
-        set wholeDigits 1
-        set wholeDigitsCanon 0
+    if \{!\[::wsdb::types::xsd::decimal::ifDecimalCanonize \$value canonList \$decimalPointCanon decimalList\]\} \{
+        lappend errorList \"failed decimal test\"
+        return \$valid
     \}
-    set foundFractionDigitsCanon \[string trimright \$dArray(fraction) 0\]
-    set foundFractionDigits \[string length \$foundFractionDigitsCanon\]"
-
-
-
-    if {[info exists Restrictions(fractionDigits)]} {
-	if {$Restrictions(fractionDigits)} {
-	    append scriptBody "
-    if \{\$foundFractionDigits == 0\} \{
-        set foundFractionDigitsCanon 0
-        if \{\".\" eq \"\$dArray(pointReal)\"\} \{ 
-            set foundFractionDigits 1
-        \}
-    \}"
-        } else {
-            namespace eval ::wsdb::types::${tns}::${typeName} [list variable decimalPointCanon ""]
-        }
-    }
-
-    append scriptBody "
-    set foundDigits \[expr \$wholeDigits + \$foundFractionDigits\]
-
-    set canonList \[list \$plusMinusCanon \$wholeDigitsCanon \$decimalPointCanon \$foundFractionDigitsCanon\]
+    set foundDigits \[lindex \$decimalList 0\]
+    set foundFractionDigits \[lindex \$decimalList 1\]
     set canonValue \[join \$canonList \"\"\]
- 
+
     while \{1\} \{
-        if \{!\[::wsdb::types::\${base}::validate \$canonValue\]\} \{
+        if \{!\[::wsdb::types::\$\{base\}::validate \$canonValue\]\} \{
             lappend errorList \"failed base test \$base\" 
             break
         \}"
@@ -281,15 +437,6 @@ proc ::wsdl::types::simpleType::restrictDecimal {
             lappend errorList \"failed pattern test using \$pattern\"
             break
         \}"
-    }
-
-    # enumeration
-    if {[info exists Restrictions(enumeration)]} {
-	lappend scriptBody "
-        if \{\[lsearch -exact \$enumeration \$value\] > -1\} \{
-            lappend errorList \"failed enumeration test\"
-            break
-        \}" 
     }
 
     # minInclusive
@@ -336,8 +483,8 @@ proc ::wsdl::types::simpleType::restrictDecimal {
         \}"
 
         }
-
-	if {$hasFractionDigits} {
+        # if fractionDigits is inherited, there is no need for this test 
+	if {$hasFractionDigits && !$inheritFractionDigits} {
             append scriptBody "
         if \{\$foundFractionDigits > \$fractionDigits\} \{
             lappend errorList \"failed foundFractionDigits (\$foundFractionDigits)\
@@ -364,7 +511,13 @@ proc ::wsdl::types::simpleType::restrictDecimal {
 
 # creates or restricts a simple type to a series of values
 proc ::wsdl::types::simpleType::restrictByEnumeration {tns typeName baseType enumerationList } {
-
+    set enumIndex 0
+    foreach enum $enumerationList {
+	if {![::wsdb::types::${baseType}::validate $enum]} {
+	    return -code error "failed enumeration item on $tns $typeName at index $enumIndex value = '$enum' not type $baseType"
+	}
+	incr enumIndex
+    }
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable base $baseType]
     namespace eval ::wsdb::types::${tns}::${typeName} "
     variable validate \[namespace code \{validate\}\]"

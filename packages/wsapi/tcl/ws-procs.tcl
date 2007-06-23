@@ -607,16 +607,14 @@ proc ::<ws>type {
 	"enum*" {
 	    # <ws>type enum namespace::name enum {base xsd::string}
 
-	    set enum  [lindex $args 0]
+	    set enum [lindex $args 0]
 	    set base [lindex $args 1]
 	    if {"$base" eq ""} {
 		set base "xsd::string"
 	    }
-	    
 	    ::wsdl::types::simpleType::restrictByEnumeration $tnsAlias \
 		$name $base $enum
 	    set ${tclNamespace}::types($name) [list base $base enum $enum]
-
 	}
 	"pat*" {
 	    set pattern  [lindex $args 0]
@@ -630,14 +628,23 @@ proc ::<ws>type {
 	}
 	"decimalRest*" {
 	    set restrictionList [lindex $args 0]
-	    set base        [lindex $args 1]
+	    set base [lindex $args 1]
 	    if {"$base" eq ""} {
 		set base "xsd::decimal"
 	    }
 	    ::wsdl::types::simpleType::restrictDecimal $tnsAlias \
 		$name $base $restrictionList
 	    set ${tclNamespace}::types($name) [list base $base restrictionList $restrictionList]
-
+	}
+	"stringRest*" {
+	    set restrictionList [lindex $args 0]
+	    set base [lindex $args 1]
+	    if {"$base" eq ""} {
+		set base "xsd::string"
+	    }
+	    ::wsdl::types::simpleType::restrictString $tnsAlias \
+		$name $base $restrictionList
+	    set ${tclNamespace}::types($name) [list base $base restrictionList $restrictionList]
 	}
 	"q*" {
 	    if {[<ws>type exists $typeName]} {

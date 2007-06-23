@@ -81,6 +81,12 @@ namespace eval ::someothernamespace {
 <ws>type decimalRestriction mywebservice::Byte {minInclusive -127 maxInclusive 127} xsd::integer
 <ws>type decimalRestriction mywebservice::TestDecimal {minExclusive -321.01 maxInclusive 456.78 totalDigits 5 fractionDigits 2}
 
+<ws>type decimalRestriction mywebservice::TestDecimal2 {pattern {[0-9]{1,4}} minInclusive 4 maxInclusive 9765} xsd::integer
+<ws>type decimalRestriction mywebservice::TestDecimal3 {totalDigits 4 fractionDigits 0}
+<ws>type decimalRestriction mywebservice::TestDecimal4 {totalDigits 4} mywebservice::TestDecimal
+
+<ws>type decimalRestriction mywebservice::TestInteger {fractionDigits 0 totalDigits 7} xsd::integer
+
 <ws>element sequence mywebservice::TestDecimalValueResponse {
     {StringToTest}
     {IsTestDecimal:boolean}
@@ -103,7 +109,7 @@ namespace eval ::someothernamespace {
     StringToTest
 } {
 
-    set IsTestDecimal [::wsdb::types::mywebservice::TestDecimal::validate $StringToTest canonList errorList]
+    set IsTestDecimal [::wsdb::types::mywebservice::TestDecimal4::validate $StringToTest errorList canonList]
 
     if {$IsTestDecimal} {
 	set CanonicalValue [join $canonList ""]
@@ -116,6 +122,42 @@ namespace eval ::someothernamespace {
     return [list $StringToTest $IsTestDecimal $CanonicalValue $ErrorString]
 
 } returns {TestDecimalValueResponse}
+
+
+
+<ws>type stringRestriction mywebservice::myString {length 10}
+<ws>type stringRestriction mywebservice::myString2 {minLength 4 maxLength 25}
+
+<ws>proc ::mywebservice::testString {
+    MyString
+    MyOtherString
+} {
+
+    set IsMyString [::wsdb::types::mywebservice::myString::validate $MyString errorList]
+
+    if {$IsMyString} {
+	set ErrorForMyString "No Error in MyString"
+    } else {
+	set ErrorForMyString [join $errorList]
+    }
+
+    set IsMyString2 [::wsdb::types::mywebservice::myString2::validate $MyOtherString errorList2]
+
+    if {$IsMyString2} {
+	set ErrorForMyString2 "No Error in MyString"
+    } else {
+	set ErrorForMyString2 [join $errorList2]
+    }
+
+    return [list $MyString $ErrorForMyString $MyOtherString $ErrorForMyString2]
+
+} returns {
+    MyString
+    ErrorForMyString
+    MyString2
+    ErrorForMyString2
+}
+    
 
 # Code below is required to be on this page:
 # service address will be url of this page.

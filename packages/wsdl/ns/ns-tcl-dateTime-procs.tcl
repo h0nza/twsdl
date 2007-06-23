@@ -24,10 +24,14 @@
 
 namespace eval ::wsdb::types::tcl::dateTime { }
 
-proc ::wsdb::types::tcl::dateTime::toArray { dateTime arrayName } {
+proc ::wsdb::types::tcl::dateTime::toArray { 
+    dateTime 
+    {arrayName ""} 
+} {
  
-
-    upvar $arrayName DT
+    if {"$arrayName" ne ""} {
+	upvar $arrayName DT
+    }
 
     # Date Parts
     set MinusOptional {([\-])?}
@@ -166,9 +170,11 @@ namespace eval ::wsdb::types::tcl::dateTime {
     }
     
     
-    proc durationToArray { duration arrayName } {
+    proc durationToArray { duration {arrayName ""} } {
 
-	upvar $arrayName D
+	if {"$arrayName" ne ""} {
+	    upvar $arrayName D
+	}
 	
 	set PositivityRequired {(?:(\-)?(P){1})}
 	set YMDOptional {((?:([0-9]+)([Y]{1}))?(?:([1-9][0-9]+)([M]{1}))?(?:([0-9]+)([D]{1}))?)?}

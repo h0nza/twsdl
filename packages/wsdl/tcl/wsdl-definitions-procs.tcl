@@ -178,16 +178,17 @@ proc ::wsdl::definitions::new {
 		    [list base "${baseAlias}:${schemaItemBase}"];
 
 	    }
-	    "decimal" {
+	    "decimal" - "string" {
 		set simpleTypeElement [::xml::element::append $typesSchemaElement simpleType \
 					   $xmlSchemaNS(prefix) [list name "$schemaItem"]];
 		set restrictionElement [::xml::element::append $simpleTypeElement restriction $xmlSchemaNS(prefix) \
 					    [list base "${baseAlias}:${schemaItemBase}"]];
-		set decimalData [set ::wsdb::schema::${tnsAlias}::${schemaItem}::data]
+		set rData [set ::wsdb::schema::${tnsAlias}::${schemaItem}::data]
 
-		foreach {decimalRestrictionElement decimalRestrictionValue} $decimalData {
-		    ::xml::element::append $restrictionElement $decimalRestrictionElement $xmlSchemaNS(prefix) \
-			[list value "$decimalRestrictionValue"];
+		foreach {rElement rValue} $rData {
+
+		    ::xml::element::append $restrictionElement $rElement $xmlSchemaNS(prefix) \
+			[list value $rValue];
 
 		}
 	    }
