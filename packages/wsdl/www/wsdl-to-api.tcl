@@ -52,7 +52,7 @@ proc xsltmsgcmd {msg terminate} {
 
 #set ::tDOM::extRefHandlerDebug 1
 
-set xmlInput "[::xml::document::print ::wsdb::definitions::${serverName}::definitions]"
+set xmlInput [set ::${serverName}::definitions]
 
 set xmldoc [dom parse  \
                       -externalentitycommand ::tDOM::extRefHandler \
