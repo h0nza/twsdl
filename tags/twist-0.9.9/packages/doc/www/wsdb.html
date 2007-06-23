@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+ <title>United eWay tWSDL Plan: Web Services Database (WSDB)</title>
+ <link rel="stylesheet" href="twsdl.css" type="text/css" >
+
+</head>
+<body>
+
+<div class="title">United eWay tWSDL: Web Services Database</div>
+ <div class="abstract">
+ A single web service may be pieced togeather using an ad-hoc method. As long
+ as the service works as intended, there is no need to rationalize the design
+ or address larger issues faced by future developers. Since tWSDL will be used
+ by developers to provide a variety of services, we must address the information
+ architecture of a running web service server. This structured information will
+ will be termed the Web Services Database.
+
+ </div>
+ <div class="abstract">Temporary Note: In thinking about the WSDB, I realized that
+ most of the Server API shown in the Examples page will be simplified, in particular
+ you will not have to provide the service name to each API call, but only when creating
+ the port and service (last few API).
+ </div>
+
+<div class="cat">Simple Idea: Everything in One Place.
+ <div class="body">The Web Services Database (WSDB) is internally represented as a
+ series of Tcl namespaces, configuration variables and dynamically generated code.
+ This structure allows for maximum introspection,
+ which is used to build and manage web services and to create and validate documents. 
+ </div> 
+</div>
+
+<div class="cat">Structure for the Web Services Database
+ <div class="body">Following is the current structure for the Web Services Database. 
+ One fact to keep in mind is that in XML Schema, simpleTypes and complexTypes can have
+ the same name, since they are in different XML namespaces. To reflect this fact, simpleTypes
+ and complexTypes are maintained in separate Tcl namespaces. In general, the Web Services
+ Database is partitioned into a hierarchy of Tcl namespaces which follow the pattern:
+<pre  class="code-example" title="Tcl Namespace Hierarchy">
+ :: wsdb
+   :: { structural component type }
+     :: { XML Namespace Alias }
+       :: { component name }
+         :: { variable children }
+</pre>
+
+ <pre class="code-example" title="Web Services DB">
+# Main Tcl Namespace 
+::wsdb
+
+# structural component type: schema (XML Schema Information)
+<a href="wsdb.tcl?ns=::wsdb::schema">::wsdb::schema</a>
+
+# WSDB supports multiple XML Schema Namespaces.
+# XML Namespaces are intended to be univerally unique and use a
+#  short text string, called a prefix in an instance document.
+# WSDB uses a similar concept, called an alias which maps the
+#  unique XML Namespace to a internally unique text string.
+# For example the XML Schema Namespace mapping is:
+#  xsd = http://www.w3.org/2001/XMLSchema
+
+# Schema to Alias Mappings (variable):
+$::wsdb::schema::aliasMap
+
+# Built in schema: XML Schema (alias = xsd):
+<a href="wsdb.tcl?ns=::wsdb::schema::xsd">::wsdb::schema::xsd</a>
+
+# structural component type: simpleTypes
+<a href="wsdb.tcl?ns=::wsdb::types">::wsdb::types</a>
+
+# simpleTypes in xsd (http://www.w3.org/2001/XMLSchema)
+<a href="wsdb.tcl?ns=::wsdb::types::xsd">::wsdb::types::xsd</a>
+
+# xsd component: string 
+# The namespace contains variables and a procedure to validate 
+<a href="wsdb.tcl?ns=::wsdb::types::xsd::string">::wsdb::types::xsd::string</a>
+
+# structural component type: complexTypes (elements)
+<a href="wsdb.tcl?ns=::wsdb::elements">::wsdb::elements</a>
+
+# element component in stockquoter (url:tcl:stockquoter)
+<a href="wsdb.tcl?ns=::wsdb::elements::stockquoter::StockQuote">::wsdb::elements::stockquoter::StockQuote</a>
+
+#
+# The following component types are specific to WSDL
+#
+
+# structural component type: messages 
+<a href="wsdb.tcl?ns=::wsdb::messages">::wsdb::messages</a>
+
+# Messages point to some individual element (from any namespace)
+
+# one message in stockquoter (alias) namespace:
+<a href="wsdb.tcl?ns=::wsdb::messages::stockquoter::StockRequest">::wsdb::messages::stockquoter::StockRequest</a>
+
+# structural component type: operations
+<a href="wsdb.tcl?ns=::wsdb::operations">::wsdb::operations</a>
+
+# Operations provide the key interface between XML Structures
+#  and internal Tcl procedures. An operation ties togeather:
+#  1. Input message type 
+#  2. Conversion of message to Tcl structures
+#  3. Invocation of Tcl procedure
+#  4. Conversion of Tcl results to specific format
+#  5. Creation of result document via 'new' procedure:
+$::wsdb::elements::stockquoter::StockQuote::new [list of child elements] 
+
+# one operation 
+# Maintains information and procedures necessary for invocation: 
+<a href="wsdb.tcl?ns=::wsdb::operations::stockquoter::StockQuoteOperation">::wsdb::operations::stockquoter::StockQuoteOperation</a>
+
+# structural component type: portTypes
+# portTypes represent a collection of operations which are:
+# 1. Free of transport bindings (SOAP) and possibly,
+# 2. Free of instance representation (RPC vs Document):
+<a href="wsdb.tcl?ns=::wsdb::portTypes">::wsdb::portTypes</a>
+
+# one portType
+<a href="wsdb.tcl?ns=::wsdb::porttypes::stockquoter::StockQuotePortType">::wsdb::porttypes::stockquoter::StockQuotePortType</a>
+
+
+# structural component type: bindings
+# portTypes can be bound to multiple protocols and instance
+#  representations. Currently only document/literal is supported.  
+<a href="wsdb.tcl?ns=::wsdb::bindings">::wsdb::bindings</a>
+
+# Bindings can only be reused at the port level, so internal
+# namespace distinctions no longer apply. Bindings are also unique,
+# it is illegal to combine the same portType to the same binding
+# more than once.
+ 
+# one binding
+<a href="wsdb.tcl?ns=::wsdb::bindings::StockQuoteSoapBind">::wsdb::bindings::StockQuoteSoapBind</a>
+
+# structural component type: ports
+# Ports provide a physical URL for the associated binding.
+# ports
+<a href="wsdb.tcl?ns=::wsdb::ports">::wsdb::ports</a>
+
+# one port
+<a href="wsdb.tcl?ns=::wsdb::ports::StockQuotePort">::wsdb::ports::StockQuotePort</a>
+
+
+# structural component type: services
+# A service can contain multiple ports, however, since
+# tWSDL can run multiple services at the same time, it is more common
+# to have one port per service:
+<a href="wsdb.tcl?ns=::wsdb::services">::wsdb::services</a>
+
+# one service
+<a href="wsdb.tcl?ns=::wsdb::services::StockQuoteService">::wsdb::services::StockQuoteService</a>
+
+
+# tWSDL component: server
+<a href="wsdb.tcl?ns=::wsdb::servers">::wsdb::servers</a>
+
+# A tWSDL server defines the external targetNamespace.
+# A server is associated with a single WSDL file, and can contain
+#  multiple services, although there is usually no need to do this.
+# The server namespace also maintains information on how to start up
+# a listener, which host names and which path to use.
+
+# one server
+<a href="wsdb.tcl?ns=::wsdb::servers::StockQuoter">::wsdb::servers::StockQuoter</a>
+
+
+
+ </pre>
+
+
+ </div> 
+</div>
+
+<div class="cat">Shared Information allows Maximum Reuse of Components
+ <div class="body">The sequence of namespaces listed above reflects the order
+ in which data is added to the Web Services DB. It also reflect the information
+ available to API calls. As the database is filled, future API calls can rely on
+ this information, and refer to it by name only. In addition, the order reflects
+ the fact that abstract descriptions can be reused by later API calls, essentially
+ to branch off. For instance, once an abstract type is defined, it can be used
+ by all future services. Operations can be combined into different portTypes. The same
+ portType could be bound to different ports in different services.
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+<div class="cat">
+ <div class="body">
+
+
+ </div> 
+</div>
+
+</body>
+</html>

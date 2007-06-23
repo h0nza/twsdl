@@ -1,0 +1,135 @@
+'\"
+'\" (c) 2006 United eWay
+'\" All rights reserved
+'\" Licensed under the New BSD license:
+'\" (http://www.opensource.org/licenses/bsd-license.php)
+'\" Contact: Tom Jackson <tom at junom.com>
+.so man.macros
+
+.TH <ws>type n 0.9 TWiST "TWiST: Tcl Web Services Toolkit"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+wstype \- commands
+.SH SYNOPSIS
+TWiST is a front-end toolkit for rapidly deploy Tcl procedures as a web service. The simplified API of TWiST consists of only three operational procedures: \fB<ws>namespace\fR, \fB<ws>proc\fR and \fB<ws>return\fR. The names reflect the underlying Tcl commands. Type definition procedures include \fB<ws>type\fR and \fB<ws>element\fR.
+
+\fB<ws>type\fR commands allow derivation of simpleTypes from the built in XML-Schema types. The \fBtypeName\fR parameter is a combination of the type namespace prefix and the type name, for instance stock::Symbol or stock:Symbol (the number of colons does not affect the result). The subcommand can be abbreviated, with optional characters shown in square brackets, as in enum[eration].
+.SH SYNTAX
+.PP
+\fB<ws>type exists \fItypeName \fR
+.PP
+\fB<ws>type sim[ple] \fItypeName \fR ?base?
+.PP
+\fB<ws>type enum[eration] \fItypeName enumList ?base?\fR
+.PP
+\fB<ws>type pat[tern] \fItypeName pattern ?base? \fR
+.PP
+\fB<ws>type decimalRest[riction] \fItypeName restrictionList ?base? \fR
+.PP
+\fB<ws>type q[uery] \fItypeName \fR
+.PP
+\fB<ws>type valid[ate] \fItypeName  value\fR
+.BE
+.SH DESCRIPTION
+.PP
+TWiST provides several APIs for defining types. All types are based upon built in types as described in XML-Schema Standards. The broad categories are simpleTypes such as integer, float, string, byte, etc. and complexTypes which are array and list type structures which are built up from simpleTypes. 
+
+SimpleTypes are defined and derived via the <ws>type API. The derivations are called restrictions. There are only a few methods of restriction available: renaming, enumeration and a regular expression or pattern. The current version of TWiST does not support uniuon types or list types. 
+.PP
+.TP
+\fB<ws>type exists\fR
+.RS
+If the type is already defined, returns 1, else returns 0.
+.RE
+.PP
+\fB<ws>type sim[ple]\fR
+.RS
+Creates a new type with the new typeName, which is validated via the base type code. The effect is to provide an additional name for the simple type, or to import the type into the current namespace.
+.RE
+.PP
+\fB<ws>type enum[eration]\fR
+.RS
+Creates a type which is restricted to be one of the enumerated values, each of which must be of the underlying base type.
+.RE
+.PP
+\fB<ws>type pat[tern]\fR
+.RS
+Creates a type with a valuespace defined by a regular expression or pattern. The values must also be a valid in the base type valuespace. 
+.RE
+.PP
+\fB<ws>type decimalRest[riction]\fR
+.RS
+Creates a derived decimal type (a number) using a number of facets:
+  The following facets are specified as a name-value list: {totalDigits 5 fractionDigits 2}
+  \fBminInclusive\fR -- a decimal number defining the low end of the restricted range of values. minInclusive is included in the range.
+  \fBminExclusive\fR -- a decimal number defining the low end of the restricted range of values. minExclusive is excluded from the range.
+  \fBmaxExclusive\fR -- a decimal number defining the high end of the restricted range of values. maxExclusive is excluded from the range.
+  \fBmaxInclusive\fR -- a decimal number defining the high end of the restricted range of values. maxExclusive is included in the range.
+  \fBtotalDigits\fR  -- an integer limiting the total number of significant digits. Leading and trailing zeros are not included in the count.
+  \fBfractionDigits\fR -- an integer limiting the total number of digits to the right of the decimal point. Trailing zeros are not included in the count.
+  
+At most only one of the min and one of the max facets can be included in the list. MinInclusive must be less than maxExclusive, and fractionDigits must be less than totalDigits. totalDigits and fractionDigits do not limit the lexical representation, which could have more or less digits than the canonical form. The canonical form disallows an optional leading positive sign (+), and must have at least one digit before and after the required decimal point, unless the restriction includes zero fractionDigits.
+
+The default base type is xsd::decimal. If a range of integers is required, the base type should be xsd::integer. Any other numeric type can be used as a base as long as the new range is a subset of the base type, otherwise only the the base type will trim the range of the derived type, with potentially unexpected results. 
+.RE
+.PP
+\fB<ws>type q[uery]\fR
+.RS
+Returns a name value list of information about an existing type, or the empty string if the type doesn't exist. 
+.RE
+.PP
+\fB<ws>type valid[ate]\fR
+.RS
+Checks if supplied value is a valid member of the type. (unimplimented)
+.RE
+.SH NOTES
+Type Definition and Use Example
+.CS
+
+<ws>namespace schema "urn:com:example:stock"
+
+<ws>type simple stock::verbose xsd::boolean
+
+<ws>type simple stock::quote xsd::float
+
+<ws>type enum stock::symbol {MSFT WMT XOM GM F GE}
+
+<ws>type enum stock::trend {-1 0 1} xsd::integer
+
+<ws>type pattern stock::Code {[0-9]{4}} xsd::integer
+
+<ws>type decimalRestriction stock::ZeroToOneExclusive {minExclusive 0 maxExclusive 1}
+
+<ws>type decimalRestriction stock::Byte {minInclusive -127 maxInclusive 127} xsd::integer
+
+<ws>type decimalRest xsd::nonPositiveInteger {maxInclusive 0} xsd::integer
+
+<ws>type decimalRest xsd::negativeInteger {maxInclusive -1} xsd::nonPositiveInteger
+
+<ws>type decimalRest xsd::short {minInclusive -32767 maxInclusive 32767} xsd::integer
+
+<ws>element sequence stock::StockResponse {  
+    {Symbol:stock::symbol}
+    {Quote:stock::quote}
+    {DateOfChange:stock::dateOfChange {minOccurs 0}}
+    {Name:stock::name                 {minOccurs 0 nillable no}}
+    {Trend:stock::trend               {minOccurs 0}}
+    {DailyMove:stock::dailyMove       {minOccurs 0}}
+    {LastMove:stock::lastMove         {minOccurs 0}}
+}
+
+<ws>element sequence stock::StockRequest {
+    {Symbol:stock::symbol}
+    {Verbose:stock::verbose {minOccurs 0 default "1"}}
+}
+
+<ws>element sequence stock::StocksRequest {
+    {StockRequest:elements::stock::StockRequest {maxOccurs 4}}
+}
+
+
+.CE
+.PP
+.SH KEYWORDS
+typeName
