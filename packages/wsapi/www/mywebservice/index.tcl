@@ -127,10 +127,12 @@ namespace eval ::someothernamespace {
 
 <ws>type stringRestriction mywebservice::myString {length 10}
 <ws>type stringRestriction mywebservice::myString2 {minLength 4 maxLength 25}
+<ws>type stringRestriction mywebservice::myString3 {pattern {\A[0-7]+\Z} maxLength 8}
 
 <ws>proc ::mywebservice::testString {
     MyString
     MyOtherString
+    MyThirdString
 } {
 
     set IsMyString [::wsdb::types::mywebservice::myString::validate $MyString errorList]
@@ -149,13 +151,23 @@ namespace eval ::someothernamespace {
 	set ErrorForMyString2 [join $errorList2]
     }
 
-    return [list $MyString $ErrorForMyString $MyOtherString $ErrorForMyString2]
+    set IsMyString3 [::wsdb::types::mywebservice::myString3::validate $MyThirdString errorList3]
+
+    if {$IsMyString3} {
+	set ErrorForMyString3 "No Error in MyString"
+    } else {
+	set ErrorForMyString3 [join $errorList3]
+    }
+
+    return [list $MyString $ErrorForMyString $MyOtherString $ErrorForMyString2 $MyThirdString $ErrorForMyString3]
 
 } returns {
     MyString
     ErrorForMyString
     MyString2
     ErrorForMyString2
+    MyString3
+    ErrorForMyString3
 }
     
 
