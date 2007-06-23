@@ -191,8 +191,17 @@ proc ::wsdl::types::simpleType::restrictString {
             lappend errorList \"failed maxLength test foundLength (\$valueLength) > maxLength ($Restrictions(maxLength))\"
             break
         \}"
-     }
+    }
      
+    # pattern
+    if {[info exists Restrictions(pattern)]} {
+	append scriptBody "
+	if \{!\[regexp \$pattern \$value\]\} \{
+lappend errorList \"failed pattern test using \[list \$pattern\]\"
+            break
+        \}"
+    }
+
     append scriptBody "
         set valid 1
         break
@@ -434,7 +443,7 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     if {[info exists Restrictions(pattern)]} {
 	append scriptBody "
 	if \{!\[regexp \$pattern \$value\]\} \{
-            lappend errorList \"failed pattern test using \$pattern\"
+lappend errorList \"failed pattern test using \[list \$pattern\]\"
             break
         \}"
     }
