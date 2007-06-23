@@ -11,14 +11,14 @@
 # load local packages
 set ::tws::packages {
     tdom
+    wsdb
     wsdl
     xml
-    wsdb
     request
-    stockQuoter
     inspect
     doc
     wsapi
+    stockQuoter
 }
 
 ::tws::util::package::loadPackages $::tws::packages

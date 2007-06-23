@@ -10,5 +10,3 @@ foreach typeNamespace {tcl} {
     ::tws::sourceFile [file normalize [file join [file dirname [info script]] "../ns/ns-${typeNamespace}.tcl"]]
 }
 
-
-

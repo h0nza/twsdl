@@ -260,6 +260,8 @@ TWiST is a front-end toolkit for rapidly deploy Tcl procedures as a web service.
 .PP
 \fB<ws>type pat[tern] \fItypeName pattern ?base? \fR
 .PP
+\fB<ws>type decimalRest[riction] \fItypeName restrictionList ?base? \fR
+.PP
 \fB<ws>type q[uery] \fItypeName \fR
 .PP
 \fB<ws>type valid[ate] \fItypeName  value\fR
@@ -289,6 +291,22 @@ Creates a type which is restricted to be one of the enumerated values, each of w
 \fB<ws>type pat[tern]\fR
 .RS
 Creates a type with a valuespace defined by a regular expression or pattern. The values must also be a valid in the base type valuespace. 
+.RE
+.PP
+\fB<ws>type decimalRest[riction]\fR
+.RS
+Creates a derived decimal type (a number) using a number of facets:
+  The following facets are specified as a name-value list: {totalDigits 5 fractionDigits 2}
+  \fBminInclusive\fR -- a decimal number defining the low end of the restricted range of values. minInclusive is included in the range.
+  \fBminExclusive\fR -- a decimal number defining the low end of the restricted range of values. minExclusive is excluded from the range.
+  \fBmaxExclusive\fR -- a decimal number defining the high end of the restricted range of values. maxExclusive is excluded from the range.
+  \fBmaxInclusive\fR -- a decimal number defining the high end of the restricted range of values. maxExclusive is included in the range.
+  \fBtotalDigits\fR  -- an integer limiting the total number of significant digits. Leading and trailing zeros are not included in the count.
+  \fBfractionDigits\fR -- an integer limiting the total number of digits to the right of the decimal point. Trailing zeros are not included in the count.
+  
+At most only one of the min and one of the max facets can be included in the list. MinInclusive must be less than maxExclusive, and fractionDigits must be less than totalDigits. totalDigits and fractionDigits do not limit the lexical representation, which could have more or less digits than the canonical form. The canonical form disallows an optional leading positive sign (+), and must have at least one digit before and after the required decimal point, unless the restriction includes zero fractionDigits.
+
+The default base type is xsd::decimal. If a range of integers is required, the base type should be xsd::integer. Any other numeric type can be used as a base as long as the new range is a subset of the base type, otherwise only the the base type will trim the range of the derived type, with potentially unexpected results. 
 .RE
 .PP
 \fB<ws>type q[uery]\fR

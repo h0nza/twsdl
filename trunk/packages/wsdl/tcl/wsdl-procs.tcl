@@ -106,3 +106,8 @@ proc ::wsdl::printChildren { { namespace ""} { depth 0} } {
 ::tws::sourceFile [file normalize [file join [file dirname [info script]] "wsdl-services-procs.tcl"]]
 ::tws::sourceFile [file normalize [file join [file dirname [info script]] "wsdl-server-procs.tcl"]]
 ::tws::sourceFile [file normalize [file join [file dirname [info script]] "wsdl-definitions-procs.tcl"]]
+
+# Type Definitions Create Procedures:
+foreach typeNamespace {tcl} {
+    ::tws::sourceFile [file normalize [file join [file dirname [info script]] "../ns/ns-${typeNamespace}.tcl"]]
+}
