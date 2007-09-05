@@ -43,6 +43,7 @@ proc ::wsclient::getWSDL {
     $wsdlDoc documentElement wsdlRoot
 
     set wsdlNS ::wsclient::${service}::wsdl
+    set ::wsclient::${service}::definitions $result
     ::xml::instance::newXMLNS $wsdlNS [$wsdlRoot asList] "1"
 
     rename $wsdlDoc ""
@@ -351,6 +352,7 @@ proc ::wsclient::findWSDLportTypeRef {
     return [::xml::getElementRefByAttrValue $parentElement portType name $portType]
 }
 	    
+proc xbasrerk { } {
 namespace eval ::wsclient::schema {
     
     variable soapEnvelopeNS
@@ -379,7 +381,7 @@ namespace eval ::wsclient::schema {
     
 }
     
- 
+
 proc ::wsclient::schema::getNamespace {
     schemaVar
 } {
@@ -407,6 +409,12 @@ proc ::wsclient::schema::getSchemaAlias {
     }
 
 }
+}
+
+
+
+
+source [file join [file dirname [info script]] wsclient-2.tcl]
 
 
 # Collect some general information about the service
@@ -457,6 +465,35 @@ proc ::wsclient::setWSDLDefinitionsAttrs {
 
 
 
+proc ::wsclient::getTypes {
+    service
+} {
+
+    # Make array for elementRefs
+    set elementRefArray [normalizeRef $service elementRef]
+
+    set parentElement [normalizeRef $service wsdl::definitions]
+
+    set typesChildren [::xml::getChildElementRefByName\
+			   $parentElement types];
+    set typesElement [::xml::normalizeElementRefs $parentElement $typesChildren]
+    
+    array set $elementRefArray [list types $typesElement];
+    
+    set schemaChildren [::xml::getChildElementRefByName\
+			    $typesElement schema];
+    set schemaElement [::xml::normalizeElementRefs $typesElement $schemaChildren]
+ 
+    array set $elementRefArray [list schema $schemaElement]
+
+    set simpleTypeChildren [::xml::getChildElementRefByName\
+			    $schemaElement simpleType];
+
+    set simpleTypeElements [::xml::normalizeElementRefs $schemaElement $simpleTypeChildren]
+
+    array set $elementRefArray [list simpleTypes $simpleTypeElements]
+}
+
 set service "adsense"
 
 ::wsclient::addService $service
@@ -465,6 +502,8 @@ set wsdlNS [::wsclient::getWSDL $service $url]
 
 
 set printed [::xml::instance::print2 ${wsdlNS}::definitions]
+
+set ${wsdlNS}::definitions $printed
 
 set Service(name) [::wsclient::setServiceName $service]
 set PortNameList [::wsclient::setPorts $service]
@@ -498,6 +537,8 @@ proc ::printit {
 
 
 
+::wsclient::getTypes $service
+
 
 foreach PortName [::wsclient::getPortNames $service] {
 
@@ -516,7 +557,23 @@ foreach PortName [::wsclient::getPortNames $service] {
     incr portIndex
 }
 
-ns_return 200 text/plain "
+
+
+
+
+
+
+
+
+
+
+
+ns_return 200 text/html "
+<h3>Namespace Code for ::wsclient::schema</h3>
+ [::inspect::displayNamespaceCode ::wsclient::schema]
+ [::inspect::displayProcs ::wsclient::schema]
+
+<pre>
 Arrays
 Service = [array get Service]
 
@@ -528,10 +585,32 @@ PortsText =
 $PortsText
 
 Set data from wsdl definitions attributes = [::wsclient::setWSDLDefinitionsAttrs $service]
+
+</pre>
+
+
+
+
+
+
+
+
+
+
 ----------------------------
 printed = 
 
 $printed
 
 
-result = $result"
+result = $result
+[::inspect::displayNamespaceChildren ::wsclient]
+<h3>Namespace Code for ::wsclient</h3>
+ [::inspect::displayNamespaceCode ::wsclient]
+ [::inspect::displayProcs ::wsclient]
+<h3>Namespace Code for ::wsclient::$service</h3>
+ [::inspect::displayNamespaceCode ::wsclient::$service]
+ [::inspect::displayProcs ::wsclient::$service]
+
+
+"
