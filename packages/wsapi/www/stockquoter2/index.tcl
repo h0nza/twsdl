@@ -39,7 +39,6 @@
     {LastMove:stock2::lastMove     {minOccurs 0}} 
 }
 
-
 # <ws>proc creates StockRequest and StockResponse elements.
 # Once they are created, documentation can be added:
 <ws>doc element stock2 StockRequest {Defines StockRequest type.
@@ -51,8 +50,8 @@
 # Notice that the return is the complexType StocksResponse which contains
 # multiple children of complexType 'StockResponse', created above:
 <ws>proc ::stock2::Stocks {
-    {Symbol:stockquoter::symbol {maxOccurs 8 default "MSFT"}}
-    {Verbose:stockquoter::verbose {minOccurs 0 default "1"}}
+    {Symbol:stock2::symbol {maxOccurs 8 default "MSFT"}}
+    {Verbose:stock2::verbose {minOccurs 0 default "1"}}
 } {
 
     set resultList [list]
@@ -61,8 +60,9 @@
     }
     return $resultList
 } returns {
-    {StocksResponse:elements::stock2::StockResponse {maxOccurs 8}} 
+    {StockResponse:elements::stock2::StockResponse {maxOccurs 8}} 
 }
+
 
 # Documentation for Element StocksRequest
 <ws>doc element stock2 StocksRequest {Multiple Stock Symbols in one document.}
@@ -70,6 +70,7 @@
 elements, one for each symbol requested"
 
 <ws>namespace set ::stock2 showDocument 1
+
 
 <ws>namespace finalize ::stock2
 

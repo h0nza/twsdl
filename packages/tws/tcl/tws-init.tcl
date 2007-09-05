@@ -9,6 +9,7 @@
 # Package Procedures
 
 ::tws::sourceFile [file join [file dirname [info script]] util-init.tcl]
+::tws::sourceFile [file join [file dirname [info script]] nvlist-init.tcl]
 
 # Import Logging
 namespace eval ::tws {

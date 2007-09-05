@@ -176,7 +176,7 @@ $inputFormElements
                 }
 	        "" {
 		    # Return list of operations
-
+                    set operationLinks ""
 		    foreach operation [set ${tclNamespace}::operations] {
 		        append operationLinks "<li><a href=\"$url?op=$operation&mode=display\">$operation</a></li><br>\n"
 		    }
@@ -335,7 +335,10 @@ proc ::<ws>namespace {
 	}
 	"finalize" {
 	    namespace eval $tclNamespace {
-
+		if {!$schemaIsInitialized} {
+		    # Maybe init schema
+		    <ws>namespace schema $tclNamespace
+		}
 		variable soapActionBase ${protocol}://$hostHeader/$xmlPrefix
 
 		# Create PortType

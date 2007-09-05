@@ -15,9 +15,16 @@ div {
     padding-top: 10px;
 }
 
-pre {
-  /*overflow:auto;*/
+.explain { 
+    
   width: 80%;
+
+}
+
+pre {
+  overflow:auto;
+  width: 80%;
+  font-size: .8em;
   font-family: 'Bitstream Vera Sans Mono', 'Andale Mono', 'LucidaTypewriter', monospace;
   background: #e7e6de;
   border: solid 1px #aaa;
@@ -53,6 +60,7 @@ pre {
 
 
 .abstract {
+    margin: 10px;
     padding: 10px;
     background-color: #9CC;
     border-color: #360;
@@ -101,12 +109,12 @@ pre {
   border-style: solid;
   border-width: 1px;
   padding-left: 10px;
+  counter-increment: lines;
 
  }
 
 .code-numbered:before {
   content: counter(lines) ". ";
-  counter-increment: lines;
 }
 
 .term { 
@@ -114,6 +122,9 @@ pre {
   font-style: italic;
 }
 
+.alternate { 
+  color: red;
+}
 .warning { 
   color: red;  
 }

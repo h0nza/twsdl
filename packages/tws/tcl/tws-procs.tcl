@@ -36,3 +36,4 @@ proc ::tws::sourceFile { file args } {
 }
 
 source [file join [file dirname [info script]] util-procs.tcl]
+source [file join [file dirname [info script]] nvlist-procs.tcl]
