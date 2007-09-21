@@ -85,7 +85,7 @@ proc ::wsdl::operations::new {
     set script "
 namespace eval ::wsdb::operations::${operationNamespace}::${operationName} \{
     variable messages [list $OperationMessages]
-    variable invoke \[namespace code \{Invoke\}\]
+    variable invoke \[namespace current\]::Invoke
     variable operationProc $operationProc
     variable inputElementData [list $inputElementData]
     variable procSignature $procSignature
