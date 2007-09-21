@@ -1,0 +1,136 @@
+body { 
+  background-color:#F5F5F5;
+  font-family:Verdana, Arial, Helvetica, sans-serif;
+  margin:0px;
+  padding:0px;
+  text-align:left;
+  background-image:url("");
+	background-repeat:repeat;
+  background-attachment:fixed;
+
+ }
+
+div {
+    padding:      5px;
+    padding-top: 10px;
+}
+
+.explain { 
+    
+  width: 80%;
+
+}
+
+pre {
+  overflow:auto;
+  width: 80%;
+  font-size: .8em;
+  font-family: 'Bitstream Vera Sans Mono', 'Andale Mono', 'LucidaTypewriter', monospace;
+  background: #e7e6de;
+  border: solid 1px #aaa;
+  padding: 0px 10px 15px 10px;
+}
+
+.cat:first-line {
+    font-weight: bold;
+}
+
+
+.point:first-letter, p:first-letter, .body:first-letter { 
+    font-weight: bold;
+    font-size: 1.5em;
+    float: left;
+}
+
+.quote {
+    margin: 20px;
+    padding: 4px;
+    display: block;
+    background-color: #ADD;
+    border-color: #360;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.title {
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+.abstract {
+    margin: 10px;
+    padding: 10px;
+    background-color: #9CC;
+    border-color: #360;
+    border-style: solid;
+    border-width: 1px;
+}
+
+
+.sidebar {
+  float: right;
+  width: 300px;
+  padding: 5px;
+  background-color: #9CC;
+  border-color: #360;
+  border-style: solid;
+  border-width: 1px;
+  font-size: .8em;
+}
+
+.code-examplex { 
+  background-color: #9CC;
+  border-color: #360;
+  border-style: solid;
+  border-width: 1px;
+  padding-left: 10px;
+ }
+
+.code { 
+  color: #366;
+  font-family: courier;
+ }
+
+.code-example a:hover { 
+  text-decoration: underline;
+  color: red;
+ }
+
+.code-example a { 
+  text-decoration: none;
+  color: inherit;
+ }
+
+.code-numbered {
+  background-color: #9CC;
+  border-color: #360;
+  border-style: solid;
+  border-width: 1px;
+  padding-left: 10px;
+  counter-increment: lines;
+
+ }
+
+.code-numbered:before {
+  content: counter(lines) ". ";
+}
+
+.term { 
+  font-weight: bold;
+  font-style: italic;
+}
+
+.alternate { 
+  color: red;
+}
+.warning { 
+  color: red;  
+}
+
+.warning:before { 
+  content: "Warning: "
+
+}
+

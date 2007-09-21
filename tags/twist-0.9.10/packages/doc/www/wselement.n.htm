@@ -1,0 +1,202 @@
+<!-- Creator     : groff version 1.18.1 -->
+<!-- CreationDate: Mon Jun 18 15:14:08 2007 -->
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta name="Content-Style" content="text/css">
+<title>&lt;ws&gt;element</title>
+</head>
+<body>
+
+<h1 align=center>&lt;ws&gt;element</h1>
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#SYNTAX">SYNTAX</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#NOTES">NOTES</a><br>
+<a href="#KEYWORDS">KEYWORDS</a><br>
+
+<hr>
+<pre>______________________________________________________________________________
+</pre>
+<a name="NAME"></a>
+<h2>NAME</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>wselement &minus; commands</p>
+</td>
+</table>
+<a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>TWiST is a front-end toolkit for rapidly deploy Tcl
+procedures as a web service. The simplified API of TWiST
+consists of only three operational procedures:
+<b>&lt;ws&gt;namespace</b>, <b>&lt;ws&gt;proc</b> and
+<b>&lt;ws&gt;return</b>. The names reflect the underlying
+Tcl commands. Type definition procedures include
+<b>&lt;ws&gt;type</b> and <b>&lt;ws&gt;element</b>.</p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;element</b> commands allow the construction
+of complexTypes from existing simpleTypes and complexTypes.
+In TWiST, complexTypes are structural types composed of an
+ordered series of elements of previously defined types.
+XML-Schema Structures defines several varieties of model
+groups: &rsquo;all&rsquo;, &rsquo;choice&rsquo; and
+&rsquo;sequence&rsquo;. In this case, choice is similar to
+union for simpleTypes and is not supported. All is similar
+to an array, and items can appear in any order. All is
+restricted to either zero or one of each child. Sequence is
+similar to a list, with multiple children of the same type
+grouped togeather in the specified order. The basic reason
+for these differences is to aid the development of optimized
+software, or to support union data types. TWiST and the
+underlying tWSDL simplify or relax these requirements when
+reading and validating, but produce conforming complexTypes.
+In addition, the &rsquo;all&rsquo; compositor is never used,
+as it is easily handled as a sequence.</p>
+</td>
+</table>
+<a name="SYNTAX"></a>
+<h2>SYNTAX</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;element exists</b> <i>typeName</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;element seq[uence]</b> <i>typeName
+typeList</i></p>
+<!-- INDENTATION -->
+<pre>_________________________________________________________________
+</pre>
+</td>
+</table>
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>TWiST provides several APIs for defining types. All types
+are based upon built in types as described in XML-Schema
+Standards. The broad categories are simpleTypes such as
+integer, float, string, byte, etc. and complexTypes which
+are array and list type structures which are built up from
+simpleTypes.</p>
+</td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;element exists</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>If the element is already defined, returns 1, else
+returns 0.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;element seq[uence]</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Creates a new global complexType composed of a sequence
+of particles defined in the typeList</p></td>
+</table>
+<a name="NOTES"></a>
+<h2>NOTES</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>Type Definition and Use Example</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<pre>&lt;ws&gt;namespace schema &quot;urn:com:example:stock&quot;
+
+&lt;ws&gt;type simple stock::verbose xsd::boolean
+
+&lt;ws&gt;type simple stock::quote xsd::float
+
+&lt;ws&gt;type enum stock::symbol {MSFT WMT XOM GM F GE}
+
+&lt;ws&gt;type enum stock::trend {-1 0 1} xsd::integer
+
+&lt;ws&gt;type pattern stock::Code {[0-9]{4}} xsd::integer
+
+&lt;ws&gt;element sequence stock::StockResponse {
+    {Symbol:stock::symbol}
+    {Quote:stock::quote}
+    {DateOfChange:stock::dateOfChange {minOccurs 0}}
+    {Name:stock::name                 {minOccurs 0 nillable no}}
+    {Trend:stock::trend               {minOccurs 0}}
+    {DailyMove:stock::dailyMove       {minOccurs 0}}
+    {LastMove:stock::lastMove         {minOccurs 0}}
+}
+
+&lt;ws&gt;element sequence stock::StockRequest {
+    {Symbol:stock::symbol}
+    {Verbose:stock::verbose {minOccurs 0 default &quot;1&quot;}}
+}
+
+&lt;ws&gt;element sequence stock::StocksRequest {
+    {StockRequest:elements::stock::StockRequest {maxOccurs 4}}
+}
+
+</pre>
+</td>
+</table>
+<a name="KEYWORDS"></a>
+<h2>KEYWORDS</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>typeName</p>
+</td>
+</table>
+<hr>
+</body>
+</html>

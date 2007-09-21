@@ -1,0 +1,350 @@
+<!-- Creator     : groff version 1.18.1 -->
+<!-- CreationDate: Mon Jun 18 15:14:07 2007 -->
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta name="Content-Style" content="text/css">
+<title>&lt;ws&gt;namespace</title>
+</head>
+<body>
+
+<h1 align=center>&lt;ws&gt;namespace</h1>
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#SYNTAX">SYNTAX</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#NOTES">NOTES</a><br>
+<a href="#KEYWORDS">KEYWORDS</a><br>
+
+<hr>
+<pre>______________________________________________________________________________
+</pre>
+<a name="NAME"></a>
+<h2>NAME</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>wsnamespace &minus; commands</p>
+</td>
+</table>
+<a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>TWiST is a front-end toolkit for rapidly deploy Tcl
+procedures as a web service. The simplified API of TWiST
+consists of only three procedures:
+<b>&lt;ws&gt;namespace</b>, <b>&lt;ws&gt;proc</b> and
+<b>&lt;ws&gt;return</b>. The names reflect the underlying
+Tcl commands.</p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace</b> commands are used to establish
+and maintain the web service.</p>
+</td>
+</table>
+<a name="SYNTAX"></a>
+<h2>SYNTAX</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace init</b> <i>tclNamespace</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace schema</b> <i>tclNamespace
+targetNamespace</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace import</b> <i>tclNamespace
+fullyQualifiedProcName</i> ?returns? ?typedReturnList?</p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace finalize</b>
+<i>tclNamespace</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace freeze</b> <i>tclNamespace</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace unfreeze</b>
+<i>tclNamespace</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace set</b> <i>tclNamespace
+variable</i> ?value?</p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace lappend</b> <i>tclNamespace
+variable value</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace eval</b> <i>tclNamespace
+body</i></p>
+<!-- INDENTATION -->
+<p><b>&lt;ws&gt;namespace delete</b> <i>tclNamespace</i></p>
+<!-- INDENTATION -->
+<pre>_________________________________________________________________
+</pre>
+</td>
+</table>
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>The TWiST API enables rapid deployment of Tcl procedures
+as a web service. Currently TWiST runs as an AOLserver
+module and uses AOLserver as the HTTP server for request and
+response. TWiST is non-invasive: the API is used in a Tcl
+script in the pageroot of the AOLserver. The location of the
+Tcl script file becomes the address of the web service. In
+addition, the developer does not have to modify any existing
+code. The TWiST API is best considered as a configuration of
+an interface. This allows the interface and the internal API
+to vary independently and maintains separation between code
+and configuration.</p>
+<!-- INDENTATION -->
+<p>Once a web service is defined in a Tcl page via the TWiST
+API, visiting the page with a web browser will return a list
+of operations available, links to more information for each
+operation, and a link to the Web Service Description (WSDL)
+of the web service. The operation links can be followed to
+display an example SOAP Request to invoke the operation.
+This link also provides a form which can be used to submit
+parameter values, invoke the service and display the actual
+SOAP Request and SOAP Response.</p>
+</td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace init</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Creates the Tcl namespace and sets up a few namespace
+variables.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace schema</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Initializes the XML-Schema Namespace so types can be
+defined prior to use by <b>&lt;ws&gt;proc</b> and
+<b>&lt;ws&gt;namespace import</b>. The targetNamespace is
+also changed to the provided value. Developers should use
+this command any time either <b>&lt;ws&gt;type</b> or
+<b>&lt;ws&gt;element</b> are called prior to calling
+<b>&lt;ws&gt;proc</b> or <b>&lt;ws&gt;namespace
+import</b>.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace import</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Provides a simple method for adding an existing procedure
+from another namespace to the web service.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace finalize</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Once all procedures have been added to the web service,
+finalize handles the grouping and binding of the procedures
+into a web service.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace freeze</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Blocks any further modifications to the web service. Use
+the freeze command after development is complete. The
+command prevents execution of the defining scripts. However,
+developers may need to restart AOLserver if types or proc
+signatures change. Also note that threads will exit within a
+few minutes, providing the same effect as
+restarting.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace unfreeze</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Unblocks editing of the web service.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace set</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Either sets or returns the value of a web service
+variable.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace lappend</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>List appends an element to a named web service
+variable.</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace eval</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Executes the same as namespace eval
+(unimplemented).</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p><b>&lt;ws&gt;namespace delete</b></p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<p>Deletes the namespace and the associated web service
+(unimplemented).</p></td>
+</table>
+<a name="NOTES"></a>
+<h2>NOTES</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>Hello World! Example:</p></td>
+</table>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="20%"></td>
+<td width="79%">
+<pre>&lt;ws&gt;namespace init ::MyWebService
+
+&lt;ws&gt;proc ::MyWebService::HelloWorld { } {
+    return &quot;Hello World!&quot;
+} returns { Listen }
+
+&lt;ws&gt;namespace finalize ::MyWebService
+
+&lt;ws&gt;namespace freeze ::MyWebService
+
+&lt;ws&gt;return ::MyWebService
+
+</pre>
+</td>
+</table>
+<a name="KEYWORDS"></a>
+<h2>KEYWORDS</h2>
+<!-- INDENTATION -->
+
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="89%">
+<p>tclNamespace</p>
+</td>
+</table>
+<hr>
+</body>
+</html>
