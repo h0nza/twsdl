@@ -59,6 +59,30 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
     set ::wsdb::bindings::${bindingName}::portTypeNamespace $portTypeNamespace
     set ::wsdb::bindings::${bindingName}::portTypeName $portTypeName
 
+    # Returns responseMessage (experimental proc)
+    proc ::wsdb::bindings::${bindingName}::InvokeOperation {
+        operation
+	documentElement
+	outputReference
+    } {
+	variable portTypeNamespace
+	return [[set ::wsdb::operations::${portTypeNamespace}::${operation}::invoke] \
+			  $documentElement $outputReference]
+
+    }
+
+    # Maybe abstract to ValidateMessage -type (input/output/fault)
+    proc ::wsdb::bindings::${bindingName}::ValidateInputMessage {
+        operation
+        documentElement
+    } {
+	variable portTypeNamespace
+	set inputMessageType [::wsdl::operations::getInputMessageType $portTypeNamespace $operation]
+
+	return [[set ::wsdb::elements::${portTypeNamespace}::${inputMessageType}::validate] \
+			  $documentElement]
+    }
+
     proc ::wsdb::bindings::${bindingName}::HandleRequest {
 
 	requestID
@@ -232,7 +256,9 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	    }
 	    log Debug "HandleRequest: validating messageType '${inputMessageType}'"
 	    log Debug "HandleRequest: validating with '::wsdb::elements::${portTypeNamespace}::${inputMessageType}::validate'"
-	    if {![[set ::wsdb::elements::${portTypeNamespace}::${inputMessageType}::validate] $XMLdocumentElement]} {
+	    #if {![[set ::wsdb::elements::${portTypeNamespace}::${inputMessageType}::validate] $XMLdocumentElement]} {
+	    #}
+	    if {![ValidateInputMessage $operation $XMLdocumentElement]} {
 		log Error "HandleRequest input document invalid"
 		
 		# Return Error for fault...How?
@@ -245,9 +271,11 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
 	    }
 	    log Debug "HandleRequest: invoking '[set ::wsdb::operations::${portTypeNamespace}::${operation}::invoke]'"
 	    # Document is valid...Invoke command
-	    set responseMessage [[set ::wsdb::operations::${portTypeNamespace}::${operation}::invoke] \
-				     "$XMLdocumentElement" "${requestNamespace}::output"]
-	    
+	    if {0} {
+		set responseMessage [eval [linsert [set ::wsdb::operations::${portTypeNamespace}::${operation}::invoke] end \
+					       "$XMLdocumentElement" "${requestNamespace}::output"]]
+	    }
+	    set responseMessage [InvokeOperation $operation $XMLdocumentElement ${requestNamespace}::output]
 	    # Set default namespace on message
 	    ::xml::element::setAttribute "$responseMessage" "xmlns" "$targetNamespace"
 	    
@@ -267,7 +295,7 @@ proc ::wsdl::bindings::soap::documentLiteral::new {
     }
 
     namespace eval ::wsdb::bindings::${bindingName} {
-	set handleRequest [namespace code {HandleRequest}]
+	set handleRequest [namespace current]::HandleRequest
     }
 
 }

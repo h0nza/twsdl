@@ -24,7 +24,7 @@ proc ::wsdl::types::simpleType::new {tns typeName {base "tcl::anySimpleType"} } 
 
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable base "$base"]
     namespace eval ::wsdb::types::${tns}::${typeName} "
-    variable validate \[namespace code \{::wsdb::types::${tns}::${typeName}::validate\}\]"
+    variable validate \[namespace current\]::validate"
     
     proc ::wsdb::types::${tns}::${typeName}::validate { value } "
        variable base
@@ -42,7 +42,7 @@ proc ::wsdl::types::primitiveType::new {tns typeName code description} {
 
     namespace eval ::wsdb::types::${tns}::$typeName [list variable description "$description"]
     namespace eval ::wsdb::types::${tns}::${typeName} "
-    variable validate \[namespace code \{::wsdb::types::${tns}::${typeName}::validate\}\]"
+    variable validate \[namespace current\]::validate"
 
     proc ::wsdb::types::${tns}::${typeName}::validate { value } $code
 }
@@ -150,7 +150,7 @@ proc ::wsdl::types::simpleType::restrictString {
     }
     
     namespace eval ::wsdb::types::${tns}::${typeName} "
-    variable validate \[namespace code \{validate\}\]"
+    variable validate \[namespace current\]::validate"
     
     
     set scriptBody "
@@ -385,7 +385,7 @@ proc ::wsdl::types::simpleType::restrictDecimal {
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable decimalPointCanon $decimalPointCanon]
 
     namespace eval ::wsdb::types::${tns}::${typeName} "
-    variable validate \[namespace code \{validate\}\]"
+    variable validate \[namespace current\]::validate"
 
 
     # NOTE: the first validity test is against the baseType. Unfortunately,
@@ -529,7 +529,7 @@ proc ::wsdl::types::simpleType::restrictByEnumeration {tns typeName baseType enu
     }
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable base $baseType]
     namespace eval ::wsdb::types::${tns}::${typeName} "
-    variable validate \[namespace code \{validate\}\]"
+    variable validate \[namespace current\]::validate"
 
     proc ::wsdb::types::${tns}::${typeName}::validate { value } "
        variable base
@@ -547,7 +547,7 @@ proc ::wsdl::types::simpleType::restrictByPattern {tns typeName baseType pattern
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable base $baseType]
     namespace eval ::wsdb::types::${tns}::${typeName} [list variable pattern $pattern]
     namespace eval ::wsdb::types::${tns}::${typeName} "
-    variable validate \[namespace code \{::wsdb::types::${tns}::${typeName}::validate\}\]"
+    variable validate ::wsdb::types::${tns}::${typeName}::validate"
 
     proc ::wsdb::types::${tns}::${typeName}::validate { value } "
         variable base
@@ -731,7 +731,7 @@ proc ${namespace}::Validate$typeName \{ namespace \} \{
     foreach Element $Elements {
 	append script "
             $Element \{
-                if \{!\[\$validate_$Element \$childPart]\} \{  
+                if \{!\[eval \[linsert \$validate_$Element end \$childPart\]\]\} \{  
                     ::wsdl::elements::noteFault \$namespace \[list 2 $Element \$childPart\]
                     incr COUNT(.INVALID)
                     break
@@ -783,8 +783,8 @@ namespace eval ::wsdb::elements::${schemaAlias}::${parentElement}::$element \{
     variable facetList \{$ElementArray(facets)\}
     variable minOccurs $ElementArray(minOccurs)
     variable maxOccurs $ElementArray(maxOccurs)
-    variable validate \[namespace code \{Validate\}\]
-    variable new      \[namespace code \{new\}\]
+    variable validate \[namespace current\]::Validate
+    variable new      \[namespace current\]::new
     variable validate_$ValidateTypeTail \$::wsdb::types::${base}::validate
 
     proc Validate \{ namespace \} \{
@@ -1056,8 +1056,8 @@ namespace eval ::wsdb::elements::${schemaAlias}::$typeName \{
     variable MinOccurs
     variable MaxOccurs
     variable facetList \[list form Value name $typeName\]
-    variable validate \[namespace code \{Validate${typeName}\}\]
-    variable new      \[namespace code \{new\}]"
+    variable validate \[namespace current\]::Validate${typeName}
+    variable new      \[namespace current\]::new"
 
     foreach Element $Elements {
 	append script "

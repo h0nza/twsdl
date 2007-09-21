@@ -11,7 +11,7 @@ the tcl8.4.9/unix directory:
 ./configure --prefix=/web/m2 \
             --enable-threads \
             --enable-symbols \
-            --disable-shared 
+            --enable-shared 
 
 Make changes to --prefix as required (Tcl will install in 
 /web/m2/lib based upon the above --prefix, tclsh8.4 will

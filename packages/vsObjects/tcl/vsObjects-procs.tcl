@@ -13,7 +13,7 @@ set vsns "vs"
 namespace eval ::wsdb::types::vs { }
 
 namespace eval ::wsdb::types::vs::vsObjectKey {
-    variable validate [namespace code {Validate}]
+    variable validate [namespace current]::Validate
 }
 
 proc ::wsdb::types::vs::vsObjectKey::Validate { objectKey } {
